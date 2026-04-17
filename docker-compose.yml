@@ -13,7 +13,7 @@ services:
     image: zfitspa:latest
 
     ports:
-      - "3000:3000"
+      - "3002:3002"
 
     restart: unless-stopped
 
