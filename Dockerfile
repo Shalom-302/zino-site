@@ -30,7 +30,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init curl libc6-compat
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 # On récupère le build standalone
