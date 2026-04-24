@@ -8,19 +8,18 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useEnvironment } from '@/context/environment-context';
 
-const defaultCoaches = [
-  { id: 1, name: "JOSEPH MIAN", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772191399963.png", key: 'coach_1' },
-  { id: 2, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772191416731.png", key: 'coach_2' },
-  { id: 3, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772191429588.png", key: 'coach_3' },
-  { id: 4, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772191447003.png", key: 'coach_4' },
-  { id: 5, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772191495448.png", key: 'coach_5' },
-  { id: 6, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772364629929.png", key: 'coach_6' },
-  { id: 7, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772364653122.png", key: 'coach_7' },
-  { id: 8, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772364669479.png", key: 'coach_8' },
-  { id: 9, name: "COACH ZFITSPA", title: "Fitness Manager", certifications: "Pro Elite RPM™ | HBX Certified", description: "Plus de dix ans d'expérience dans le fitness et la préparation physique. Joseph combine leadership, technicité et encadrement structuré pour accompagner chaque membre vers des résultats mesurables et durables.\n\nCertifié Les Mills™ (BodyPump, BodyAttack, BodyCombat, RPM, Sprint, GRIT) et instructeur HBX (Boxing, TRX), il intervient également en personal training pour la transformation physique et la performance.", specialites: "Perte de gras, musculation, transformation physique, préparation physique, coaching personnalisé.", signature: "Commence maintenant, procrastiner ne brûle pas les calories.", phone: "", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772364682257.png", key: 'coach_9' },
-];
-
-type Coach = typeof defaultCoaches[number];
+type Coach = {
+  id: number | string;
+  name: string;
+  title: string;
+  certifications: string;
+  description: string;
+  specialites: string;
+  signature: string;
+  phone: string;
+  image: string;
+  key: string;
+};
 
 interface ModalState {
   coach: Coach;
@@ -30,20 +29,11 @@ interface ModalState {
 const TARGET_W = 420;
 const TARGET_H = TARGET_W * (4 / 3);
 
-const OurCoaches = ({ initialImages }: { initialImages?: Record<string, { url: string, type: string }> }) => {
+const OurCoaches = () => {
   const { environment } = useEnvironment();
   const isSpa = environment === 'spa';
   const spaBg = '#F4EBD9';
-  const [coaches, setCoaches] = useState<Coach[]>(() => {
-    if (isSpa) return []; // spa: only show entries from DB
-    if (initialImages) {
-      return defaultCoaches.map(coach => {
-        const update = initialImages[coach.key];
-        return update?.url ? { ...coach, image: update.url } : coach;
-      });
-    }
-    return defaultCoaches;
-  });
+  const [coaches, setCoaches] = useState<Coach[]>([]);
 
   const [modal, setModal] = useState<ModalState | null>(null);
   const [phase, setPhase] = useState<'enter' | 'open' | 'exit'>('open');
@@ -68,29 +58,23 @@ const OurCoaches = ({ initialImages }: { initialImages?: Record<string, { url: s
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
-  // Supabase data fetch — clés séparées par environnement
+  // Fetch coaches exclusively from Firestore (dashboard-managed)
   useEffect(() => {
     const prefix = isSpa ? 'spa_coach_' : 'coach_';
-    const allKeys = defaultCoaches.map(c => `${isSpa ? 'spa_' : ''}${c.key}`);
 
     const fetchCoaches = async () => {
       const [infoSnap, imgSnap] = await Promise.all([
-        isSpa
-          ? getDocs(query(collection(db, 'coaches_info'), where('coach_key', '>=', prefix), where('coach_key', '<', prefix + '\uf8ff')))
-          : getDocs(query(collection(db, 'coaches_info'), where('coach_key', 'in', allKeys))),
-        isSpa
-          ? getDocs(query(collection(db, 'site_images'), where('__name__', '>=', prefix), where('__name__', '<', prefix + '\uf8ff')))
-          : getDocs(query(collection(db, 'site_images'), where('__name__', 'in', allKeys))),
+        getDocs(query(collection(db, 'coaches_info'), where('coach_key', '>=', prefix), where('coach_key', '<', prefix + '\uf8ff'))),
+        getDocs(query(collection(db, 'site_images'), where('__name__', '>=', prefix), where('__name__', '<', prefix + '\uf8ff'))),
       ]);
       const infoData = infoSnap.docs.map(d => d.data());
       const imgData = imgSnap.docs.map(d => ({ image_key: d.id, image_url: d.data().image_url }));
 
-      if (isSpa) {
-        // Spa: show all practitioners from coaches_info (admin-managed)
-        const entries = (infoData || []).map((info) => {
-          const img = imgData?.find(i => i.image_key === info.coach_key);
+      const entries = infoData
+        .filter((info) => info.published === true)
+        .map((info) => {
+          const img = imgData.find(i => i.image_key === info.coach_key);
           return {
-            ...defaultCoaches[0],
             id: info.coach_key,
             key: info.coach_key,
             image: img?.image_url || '',
@@ -103,19 +87,7 @@ const OurCoaches = ({ initialImages }: { initialImages?: Record<string, { url: s
             phone: info.phone ?? '',
           };
         });
-        setCoaches(entries);
-      } else {
-        setCoaches(defaultCoaches.map((coach) => {
-          const actualKey = `${prefix}${coach.key}`;
-          const img = imgData?.find(i => i.image_key === actualKey);
-          const info = infoData?.find(i => i.coach_key === actualKey);
-          return {
-            ...coach,
-            ...(img ? { image: img.image_url } : {}),
-            ...(info ? { name: info.name, title: info.title, certifications: info.certifications ?? '', description: info.description, specialites: info.specialites ?? '', signature: info.signature ?? '', phone: info.phone ?? '' } : {}),
-          };
-        }));
-      }
+      setCoaches(entries);
     };
     fetchCoaches();
   }, [isSpa]);

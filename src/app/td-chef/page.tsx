@@ -100,7 +100,7 @@ interface EntranceImage {
   image_key: 'entrance_fitness' | 'entrance_spa'; image_url: string; media_type?: 'image' | 'video';
 }
 interface CoachInfo {
-  coach_key: string; name: string; title: string; description: string;
+  coach_key: string; name: string; title: string; description: string; published?: boolean;
 }
 
 const IMAGE_LABELS: Record<string, string> = {
@@ -239,7 +239,7 @@ export default function TdChefPage() {
     } catch { /* no-op */ }
   };
 
-  const handleCoachInfoChange = (coach_key: string, field: keyof CoachInfo, value: string) => {
+  const handleCoachInfoChange = (coach_key: string, field: keyof CoachInfo, value: string | boolean) => {
     setCoachesInfo(prev => prev.map(c => c.coach_key === coach_key ? { ...c, [field]: value } : c));
   };
 
@@ -251,6 +251,7 @@ export default function TdChefPage() {
       await setDoc(doc(db, 'coaches_info', coach_key), {
         coach_key,
         name: info.name, title: info.title, description: info.description,
+        published: info.published ?? false,
         updated_at: new Date().toISOString(),
       }, { merge: true });
       toast.success('Coach sauvegardé');
@@ -559,6 +560,24 @@ export default function TdChefPage() {
                         <Label className="text-[10px] uppercase tracking-widest text-black/40 mb-1 block">Description</Label>
                         <Textarea value={coach.description ?? ''} onChange={e => handleCoachInfoChange(coach.coach_key, 'description', e.target.value)} className="text-sm resize-none text-black bg-white" rows={3} />
                       </div>
+                      {/* Statut Brouillon / Publié */}
+                      <div className="flex items-center gap-2 py-2 border-t border-black/6">
+                        <button
+                          type="button"
+                          onClick={() => handleCoachInfoChange(coach.coach_key, 'published', !coach.published)}
+                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${coach.published ? 'bg-emerald-500' : 'bg-black/20'}`}
+                          role="switch"
+                          aria-checked={coach.published ?? false}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${coach.published ? 'translate-x-4' : 'translate-x-0'}`}
+                          />
+                        </button>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${coach.published ? 'text-emerald-600' : 'text-black/35'}`}>
+                          {coach.published ? 'Publié' : 'Brouillon'}
+                        </span>
+                      </div>
+
                       <div className="flex gap-2 mt-auto">
                         <Button onClick={() => saveCoachInfo(coach.coach_key)} disabled={savingCoach === coach.coach_key}
                           className="flex-1 bg-[#0F0F0F] hover:bg-[#E13027] text-white text-xs uppercase tracking-widest font-bold">

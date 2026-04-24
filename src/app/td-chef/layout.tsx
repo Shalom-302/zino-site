@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { Loader2, Image as ImageIcon, CalendarDays, LogOut, Menu, X, CalendarCheck, Mail, Send, Users } from 'lucide-react';
+import { Loader2, Image as ImageIcon, CalendarDays, LogOut, Menu, X, CalendarCheck, Mail, Users } from 'lucide-react';
 
 const NAV = [
   { href: '/td-chef/reservations', label: 'Réservations', icon: CalendarCheck },
@@ -15,7 +15,6 @@ const NAV = [
 
 const NAV_NEWSLETTER = [
   { href: '/td-chef/newsletter', label: 'Abonnés', icon: Users, exact: true },
-  { href: '/td-chef/newsletter/envoyer', label: 'Envoyer', icon: Send },
 ];
 
 export default function TdChefLayout({ children }: { children: React.ReactNode }) {

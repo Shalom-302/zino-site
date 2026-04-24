@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Programme & Emploi du Temps – Cours Collectifs Abidjan",
   description:
-    "Consultez le programme mensuel de Z FIT/SPA à Abidjan. Emploi du temps des cours collectifs : RPM, Aquagym, Les Smiles, HBX, Zumba, Bodypump, Body Combat et plus encore. Côte d'Ivoire.",
+    "Consultez le programme mensuel de Z FIT/SPA à Abidjan. Emploi du temps des cours collectifs : RPM, Aquagym, Les Mills, HBX, Zumba, Bodypump, Body Combat et plus encore. Côte d'Ivoire.",
   keywords: [
     "programme cours collectifs Abidjan",
     "emploi du temps salle sport Abidjan",

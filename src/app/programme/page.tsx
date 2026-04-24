@@ -153,7 +153,7 @@ export default function ProgrammePage() {
               className="relative pb-5 text-[10px] md:text-[11px] uppercase tracking-[0.22em] transition-colors duration-300 whitespace-nowrap"
               style={{ color: activeTab === cat ? "#fff" : "rgba(255,255,255,0.3)" }}
             >
-              {cat}
+              {cat === "Les Mills" ? <>Les Mills<sup className="text-[7px] align-super">™</sup></> : cat}
               {activeTab === cat && (
                 <motion.div
                   layoutId="prog-tab-underline"

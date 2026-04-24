@@ -21,6 +21,7 @@ const DEFAULT_FITNESS_LINKS = [
 const DEFAULT_SPA_LINKS = [
   { name: "Carte des soins", href: "/carte-soins" },
   { name: "Nos maisons", href: "/#nos-maisons" },
+  { name: "Carte cadeau", href: "/carte-cadeau" },
   { name: "FAQ", href: "/faq" },
 ];
 
@@ -45,14 +46,22 @@ const NavbarInner = () => {
     e.preventDefault();
     const hash = href.slice(1); // e.g. "#nos-coachs"
     if (pathname === '/') {
-      // Already on homepage — scroll directly
-      const lenis = (window as any).lenis;
-      const el = document.querySelector(hash);
-      if (lenis && el) lenis.scrollTo(el as HTMLElement, { offset: -80, duration: 1.2 });
-      else if (el) el.scrollIntoView({ behavior: 'smooth' });
+      // Already on homepage — scroll directly with retry if element not yet in DOM
+      const tryScroll = (attempts = 0) => {
+        const lenis = (window as any).lenis;
+        const el = document.querySelector(hash);
+        if (el) {
+          if (lenis) lenis.scrollTo(el as HTMLElement, { offset: -80, duration: 1.2 });
+          else el.scrollIntoView({ behavior: 'smooth' });
+        } else if (attempts < 15) {
+          setTimeout(() => tryScroll(attempts + 1), 150);
+        }
+      };
+      tryScroll();
     } else {
-      // Navigate with hash in URL — SmoothScroll reads window.location.hash on arrival
-      navigateTo('/' + hash); // e.g., '/#nos-cours'
+      // Store hash in sessionStorage so SmoothScroll finds it reliably on arrival
+      sessionStorage.setItem('_pendingScrollTo', hash);
+      navigateTo('/');
     }
     setIsMobileMenuOpen(false);
   };
@@ -161,7 +170,7 @@ const NavbarInner = () => {
                             onClick={(e) => handleAnchorClick(e, item.href)}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
-                            className="relative inline-block font-semibold tracking-tight hover:text-[#E13027] transition-colors pb-1"
+                            className="relative inline-block text-[13px] font-semibold tracking-tight hover:text-[#E13027] transition-colors pb-1"
                             style={{ color: navTextColor }}
                           >
                             {item.name}
@@ -189,16 +198,16 @@ const NavbarInner = () => {
                     setEnvironment(environment === "spa" ? "fitness" : "spa");
                     navigateTo('/');
                   }}
-                  className="hidden lg:block font-semibold tracking-tight hover:text-[#E13027] transition-colors"
+                  className="hidden lg:block text-[13px] font-semibold tracking-tight hover:text-[#E13027] transition-colors"
                   style={{ color: navTextColor }}
                 >
-                  {environment === "spa" ? "LE FIT" : "LE SPA"}
+                  {environment === "spa" ? "LE FITNESS" : "LE SPA"}
                 </button>
               )}
 
               <button
                 onClick={() => navigateTo('/reservation')}
-                className="btn-primary inline-flex items-center justify-center px-5 sm:px-6 md:px-8 h-[38px] sm:h-[42px] md:h-[46px] lg:h-[50px] whitespace-nowrap"
+                className="btn-primary inline-flex items-center justify-center text-[13px] px-5 sm:px-6 md:px-8 h-[38px] sm:h-[42px] md:h-[46px] lg:h-[50px] whitespace-nowrap"
                 style={{
                   color: navTextColor,
                   borderColor: environment === "spa" ? 'rgba(28,17,8,0.2)' : 'rgba(255,255,255,0.2)',
@@ -235,7 +244,8 @@ const NavbarInner = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            className="fixed inset-0 bg-black z-[9999]"
+            className="fixed inset-0 z-[9999]"
+            style={{ backgroundColor: environment === "spa" ? "#F4EBD9" : "#000000" }}
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
@@ -272,7 +282,8 @@ const NavbarInner = () => {
                     <a
                       href={item.href}
                       onClick={(e) => handleAnchorClick(e, item.href)}
-                      className="text-[24px] landscape:text-[18px] font-black text-white uppercase tracking-tighter"
+                      className="text-[24px] landscape:text-[18px] font-black uppercase tracking-tighter"
+                      style={{ color: environment === "spa" ? "#1C1108" : "#ffffff" }}
                     >
                       {item.name}
                     </a>
@@ -288,9 +299,10 @@ const NavbarInner = () => {
                     setIsMobileMenuOpen(false);
                     navigateTo('/');
                   }}
-                    className="text-[24px] landscape:text-[18px] font-black text-white uppercase tracking-tighter hover:text-[#E13027] transition-colors text-left"
+                    className="text-[24px] landscape:text-[18px] font-black uppercase tracking-tighter hover:text-[#E13027] transition-colors text-left"
+                    style={{ color: environment === "spa" ? "#1C1108" : "#ffffff" }}
                   >
-                    {environment === "spa" ? "LE FIT" : "LE SPA"}
+                    {environment === "spa" ? "LE FITNESS" : "LE SPA"}
                   </button>
                 )}
                 <button

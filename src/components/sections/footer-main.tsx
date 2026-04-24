@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { X } from 'lucide-react';
 
 const APP_STORE_URL = 'https://apps.apple.com/ci/app/heitzfit-4/id1570796326?l=en-GB';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.heitz.heitzfit4&pcampaignid=web_share';
@@ -13,7 +12,6 @@ const FooterMain = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
-  const [showAppModal, setShowAppModal] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,13 +95,49 @@ const FooterMain = () => {
             <a href="/faq" className="text-[12px] font-semibold uppercase tracking-widest text-white hover:text-white/70 transition-colors">
               FAQ
             </a>
-            <button
-              onClick={() => setShowAppModal(true)}
-              className="text-[12px] font-semibold uppercase tracking-widest text-white hover:text-white/70 transition-colors"
-            >
-              Télécharger notre app
-            </button>
           </nav>
+
+          {/* App Store links */}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-light">
+              Télécharger notre app
+            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-4 py-2.5 transition-opacity hover:opacity-75"
+                style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '6px' }}
+              >
+                <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <div>
+                  <p className="text-white/50 text-[9px] leading-none">Disponible sur</p>
+                  <p className="text-white font-bold text-[12px] leading-tight">App Store</p>
+                </div>
+              </a>
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-4 py-2.5 transition-opacity hover:opacity-75"
+                style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '6px' }}
+              >
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 512 512" fill="none">
+                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1z" fill="#FBBC04"/>
+                  <path d="M47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256-255.9L47 0z" fill="#4285F4"/>
+                  <path d="M473.9 256l-82.2 41-66.4-66.7 66.4-66.7 82.2 41c24.3 14.1 24.3 51.3 0 51.4z" fill="#EA4335"/>
+                  <path d="M104.6 499l220.7-220.7 60.1 60.1L104.6 499z" fill="#34A853"/>
+                </svg>
+                <div>
+                  <p className="text-white/50 text-[9px] leading-none">Disponible sur</p>
+                  <p className="text-white font-bold text-[12px] leading-tight">Google Play</p>
+                </div>
+              </a>
+            </div>
+          </div>
 
           {/* Social Icons */}
           <div className="flex items-center gap-6">
@@ -133,83 +167,6 @@ const FooterMain = () => {
         </div>
       </footer>
 
-      {/* App Download Modal */}
-      {showAppModal && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
-          onClick={() => setShowAppModal(false)}
-        >
-          <div
-            className="w-full max-w-sm overflow-hidden"
-            style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', background: '#0a0a0a' }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Red top accent */}
-            <div className="h-1 w-full bg-[#E13027]" />
-
-            <div className="px-8 pt-8 pb-10 flex flex-col items-center gap-7">
-              {/* Close */}
-              <div className="w-full flex justify-end">
-                <button
-                  onClick={() => setShowAppModal(false)}
-                  className="text-white/20 hover:text-white/60 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Description */}
-              <p className="text-white/40 text-[11px] text-center leading-relaxed tracking-wide font-light">
-                Réservez vos séances, suivez vos performances et accédez à tous nos services.
-              </p>
-
-              {/* App Store */}
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-4 px-5 py-4 transition-colors"
-                style={{ background: '#E13027', borderRadius: '2px' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#c9281f')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#E13027')}
-              >
-                <svg className="w-7 h-7 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-                <div>
-                  <p className="text-white/60 text-[9px] uppercase tracking-widest font-light">Télécharger sur</p>
-                  <p className="text-white font-black text-[14px] uppercase tracking-wide leading-tight">App Store</p>
-                </div>
-              </a>
-
-              {/* Play Store */}
-              <a
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-4 px-5 py-4 transition-colors"
-                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '2px' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)')}
-              >
-                <svg className="w-7 h-7 shrink-0" viewBox="0 0 512 512" fill="none">
-                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1z" fill="#FBBC04"/>
-                  <path d="M47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256-255.9L47 0z" fill="#4285F4"/>
-                  <path d="M473.9 256l-82.2 41-66.4-66.7 66.4-66.7 82.2 41c24.3 14.1 24.3 51.3 0 51.4z" fill="#EA4335"/>
-                  <path d="M104.6 499l220.7-220.7 60.1 60.1L104.6 499z" fill="#34A853"/>
-                </svg>
-                <div>
-                  <p className="text-white/30 text-[9px] uppercase tracking-widest font-light">Disponible sur</p>
-                  <p className="text-white font-black text-[14px] uppercase tracking-wide leading-tight">Google Play</p>
-                </div>
-              </a>
-
-              <p className="text-white/15 text-[9px] uppercase tracking-[0.3em]">iOS & Android</p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

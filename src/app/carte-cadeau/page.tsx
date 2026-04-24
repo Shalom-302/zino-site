@@ -140,7 +140,7 @@ export default function CarteCadeauPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.offrantPrenom || !form.offrantNom || !form.offrantPhone || !form.beneficiairePrenom || !form.beneficiaireNom || !form.beneficiairePhone || !form.beneficiaireEmail || form.soins.length === 0) return;
+    if (!form.offrantPrenom || !form.offrantNom || !form.offrantPhone || !form.beneficiairePrenom || !form.beneficiaireNom || form.soins.length === 0) return;
     setSubmitting(true);
     setError(null);
     const result = await sendGiftCardEmail({
@@ -170,15 +170,7 @@ export default function CarteCadeauPage() {
 
       {/* ─── HERO ─── */}
       <section className="px-8 md:px-20 pt-36 pb-14">
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-[10px] uppercase tracking-[0.35em] mb-5"
-          style={{ color: ACCENT }}
-        >
-          Le Spa by Z Fit
-        </motion.p>
+
         <motion.h1
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -435,12 +427,12 @@ export default function CarteCadeauPage() {
                         <input style={INPUT_STYLE} value={form.beneficiaireNom} onChange={set("beneficiaireNom")} required placeholder="Son nom" />
                       </div>
                       <div>
-                        <label style={LABEL_STYLE}>Téléphone / WhatsApp *</label>
-                        <input style={INPUT_STYLE} type="tel" value={form.beneficiairePhone} onChange={set("beneficiairePhone")} required placeholder="+225 00 00 00 00" />
+                        <label style={LABEL_STYLE}>Téléphone / WhatsApp</label>
+                        <input style={INPUT_STYLE} type="tel" value={form.beneficiairePhone} onChange={set("beneficiairePhone")} placeholder="+225 00 00 00 00" />
                       </div>
                       <div>
-                        <label style={LABEL_STYLE}>Email *</label>
-                        <input style={INPUT_STYLE} type="email" value={form.beneficiaireEmail} onChange={set("beneficiaireEmail")} required placeholder="son@email.com" />
+                        <label style={LABEL_STYLE}>Email</label>
+                        <input style={INPUT_STYLE} type="email" value={form.beneficiaireEmail} onChange={set("beneficiaireEmail")} placeholder="son@email.com" />
                       </div>
                     </div>
                   </div>
@@ -564,7 +556,7 @@ export default function CarteCadeauPage() {
                   <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: "36px" }}>
                     <button
                       type="submit"
-                      disabled={submitting || !form.offrantPrenom || !form.offrantNom || !form.offrantPhone || !form.beneficiairePrenom || !form.beneficiaireNom || !form.beneficiairePhone || !form.beneficiaireEmail || form.soins.length === 0}
+                      disabled={submitting || !form.offrantPrenom || !form.offrantNom || !form.offrantPhone || !form.beneficiairePrenom || !form.beneficiaireNom || form.soins.length === 0}
                       className="group flex items-center gap-4 transition-opacity disabled:opacity-40"
                     >
                       <span className="text-[11px] uppercase tracking-[0.3em] font-medium" style={{ color: TEXT }}>

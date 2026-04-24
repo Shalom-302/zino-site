@@ -15,7 +15,7 @@ const SECONDARY = "rgba(28,17,8,0.55)";
 const BORDER = "rgba(28,17,8,0.1)";
 
 /* ─── DATA ─────────────────────────────────────────────── */
-type Soin = { name: string; duree?: string; prix: string; badge?: string };
+type Soin = { name: string; duree?: string; prix: string; badge?: string; description?: string };
 type SousSection = { title: string; subtitle?: string; brand?: string; soins: Soin[] };
 type Categorie = { id: string; label: string; num: string; sections: SousSection[] };
 
@@ -30,11 +30,11 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Soins traitants en fonction du type de peau",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Soin Minéral Hydratant", badge: "Peaux Sèches", duree: "1H", prix: "55.000 / 60.000 fcfa" },
-          { name: "Soin d'Équilibre Purifiant", badge: "Peaux Mixtes à Grasses", duree: "1H", prix: "55.000 / 60.000 fcfa" },
-          { name: "Soin Apaisant", badge: "Peaux Sensibles", duree: "1H", prix: "55.000 / 60.000 fcfa" },
-          { name: "Soin Régénérant", badge: "Peaux Matures", duree: "1H", prix: "55.000 / 60.000 fcfa" },
-          { name: "Soin Bio Éclat Ambre Bleue", badge: "Toutes Peaux", duree: "1H", prix: "55.000 / 60.000 fcfa" },
+          { name: "Soin Minéral Hydratant", badge: "Peaux Sèches", duree: "1H", prix: "55.000 / 60.000 fcfa", description: "Une infusion d'hydratation pour restaurer confort et éclat aux peaux déshydratées." },
+          { name: "Soin d'Équilibre Purifiant", badge: "Peaux Mixtes à Grasses", duree: "1H", prix: "55.000 / 60.000 fcfa", description: "Une purification en profondeur pour une peau nette, fraîche et parfaitement équilibrée." },
+          { name: "Soin Apaisant", badge: "Peaux Sensibles", duree: "1H", prix: "55.000 / 60.000 fcfa", description: "Une parenthèse de douceur pour calmer la peau et apaiser les sensibilités." },
+          { name: "Soin Régénérant", badge: "Peaux Matures", duree: "1H", prix: "55.000 / 60.000 fcfa", description: "Une revitalisation profonde pour redonner souplesse et vitalité à la peau." },
+          { name: "Soin Bio Éclat Ambre Bleue", badge: "Toutes Peaux", duree: "1H", prix: "55.000 / 60.000 fcfa", description: "Une lumière subtile qui ravive le teint et révèle sa fraîcheur naturelle." },
         ],
       },
       {
@@ -42,9 +42,9 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Soins anti-âge en fonction du type de peau",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Soin Éclat Diamant Masque Gel", duree: "1H15", prix: "75.000 / 80.000 fcfa" },
-          { name: "Soin d'Équilibre Améthyste", badge: "Peaux Mixtes", duree: "1H15", prix: "75.000 / 80.000 fcfa" },
-          { name: "Soin Apaisant Smithsonite", badge: "Peaux Sensibles", duree: "1H15", prix: "75.000 / 80.000 fcfa" },
+          { name: "Soin Éclat Diamant Masque Gel", duree: "1H15", prix: "75.000 / 80.000 fcfa", description: "La pureté du diamant pour illuminer le teint et révéler sa lumière naturelle." },
+          { name: "Soin d'Équilibre Améthyste", badge: "Peaux Mixtes", duree: "1H15", prix: "75.000 / 80.000 fcfa", description: "L'équilibre retrouvé pour une peau apaisée, lumineuse et harmonieuse." },
+          { name: "Soin Apaisant Smithsonite", badge: "Peaux Sensibles", duree: "1H15", prix: "75.000 / 80.000 fcfa", description: "Un apaisement immédiat pour réconforter et rééquilibrer les peaux sensibles." },
         ],
       },
       {
@@ -52,9 +52,9 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Soins anti-âge selon le résultat souhaité",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Soin Lumière Perle & Diamant Éclaircissant", duree: "1H30", prix: "85.000 / 90.000 fcfa" },
-          { name: "Soin Anti-Rides Écrin Diamant", duree: "1H30", prix: "85.000 / 90.000 fcfa" },
-          { name: "Soin Écrin Perle Blanche Anti-Tâches", duree: "1H30", prix: "85.000 / 90.000 fcfa" },
+          { name: "Soin Lumière Perle & Diamant Éclaircissant", duree: "1H30", prix: "85.000 / 90.000 fcfa", description: "Un éclat précieux pour illuminer le teint et en révéler toute la finesse." },
+          { name: "Soin Anti-Rides Écrin Diamant", duree: "1H30", prix: "85.000 / 90.000 fcfa", description: "Une action experte pour lisser les traits et redonner fermeté à la peau." },
+          { name: "Soin Écrin Perle Blanche Anti-Tâches", duree: "1H30", prix: "85.000 / 90.000 fcfa", description: "Une correction délicate pour un teint plus uniforme et naturellement lumineux." },
         ],
       },
       {
@@ -62,7 +62,7 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Soin prestige ultime",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Soin Diamant & Collagène — Masque Prestige", duree: "1H30", prix: "95.000 / 100.000 fcfa" },
+          { name: "Soin Diamant & Collagène — Masque Prestige", duree: "1H30", prix: "95.000 / 100.000 fcfa", description: "Une régénération intensive pour raffermir la peau et raviver son éclat." },
         ],
       },
     ],
@@ -77,9 +77,9 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Purification & chaleur ancestrale",
         brand: "SULTANE DE SABA",
         soins: [
-          { name: "Hammam Origine", duree: "30min", prix: "25.000 / 30.000 fcfa" },
-          { name: "Hammam Bien-Être", duree: "45min", prix: "40.000 / 45.000 fcfa" },
-          { name: "Hammam Royal", duree: "60min", prix: "60.000 / 65.000 fcfa" },
+          { name: "Hammam Origine", duree: "30min", prix: "25.000 / 30.000 fcfa", description: "Hammam et gommage pour purifier la peau et amorcer un profond relâchement." },
+          { name: "Hammam Bien-Être", duree: "45min", prix: "40.000 / 45.000 fcfa", description: "Hammam, gommage et rassoul pour une purification en profondeur et une peau intensément douce." },
+          { name: "Hammam Royal", duree: "60min", prix: "60.000 / 65.000 fcfa", description: "Hammam, gommage, rassoul et pureté du visage pour une expérience complète du corps et de l'esprit." },
         ],
       },
       {
@@ -87,9 +87,9 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Exfoliation & douceur",
         brand: "SULTANE DE SABA",
         soins: [
-          { name: "Gommage aux Sels et Huiles Précieuses", duree: "30min", prix: "35.000 / 40.000 fcfa" },
-          { name: "Gommage Ayurvédique aux Noyaux d'Abricot", duree: "30min", prix: "35.000 / 40.000 fcfa" },
-          { name: "Gommage Lulur — Rituel de Bali", duree: "30min", prix: "35.000 / 40.000 fcfa" },
+          { name: "Gommage aux Sels et Huiles Précieuses", duree: "30min", prix: "35.000 / 40.000 fcfa", description: "Une exfoliation aux sels marins et huiles précieuses pour une peau douce, nourrie et lumineuse." },
+          { name: "Gommage Ayurvédique aux Noyaux d'Abricot", duree: "30min", prix: "35.000 / 40.000 fcfa", description: "Une exfoliation inspirée des rituels indiens pour lisser la peau et stimuler la circulation." },
+          { name: "Gommage Lulur — Rituel de Bali", duree: "30min", prix: "35.000 / 40.000 fcfa", description: "Un gommage délicat pour révéler une peau satinée et subtilement parfumée." },
         ],
       },
       {
@@ -97,11 +97,11 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Exfoliation haute performance aux pierres précieuses",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Gommage aux Sels de Péridot", badge: "Relaxant & Anti-Stress", duree: "45min", prix: "45.000 / 50.000 fcfa" },
-          { name: "Gommage aux Sels de Rubis", badge: "Anti-Âge & Lissant", duree: "45min", prix: "45.000 / 50.000 fcfa" },
-          { name: "Gommage aux Sels de Saphir", badge: "Amincissant & Raffermissant", duree: "45min", prix: "45.000 / 50.000 fcfa" },
-          { name: "Gommage à la Perle de Gommage", badge: "Adoucissant", duree: "45min", prix: "40.000 / 45.000 fcfa" },
-          { name: "Gommage à l'Éclat de Mangue", badge: "Énergisant", duree: "45min", prix: "40.000 / 45.000 fcfa" },
+          { name: "Gommage aux Sels de Péridot", badge: "Relaxant & Anti-Stress", duree: "45min", prix: "45.000 / 50.000 fcfa", description: "Une exfoliation relaxante pour lisser la peau et libérer les tensions." },
+          { name: "Gommage aux Sels de Rubis", badge: "Anti-Âge & Lissant", duree: "45min", prix: "45.000 / 50.000 fcfa", description: "Une exfoliation stimulante pour raviver l'éclat et la vitalité de la peau." },
+          { name: "Gommage aux Sels de Saphir", badge: "Amincissant & Raffermissant", duree: "45min", prix: "45.000 / 50.000 fcfa", description: "Une exfoliation tonifiante pour une peau plus ferme et harmonieuse." },
+          { name: "Gommage à la Perle de Gommage", badge: "Adoucissant", duree: "45min", prix: "40.000 / 45.000 fcfa", description: "Une exfoliation délicate pour affiner le grain de peau et révéler sa douceur." },
+          { name: "Gommage à l'Éclat de Mangue", badge: "Énergisant", duree: "45min", prix: "40.000 / 45.000 fcfa", description: "Une exfoliation fruitée pour redonner énergie et éclat à la peau." },
         ],
       },
     ],
@@ -116,11 +116,11 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Aux huiles précieuses",
         brand: "SULTANE DE SABA",
         soins: [
-          { name: "Massage Balinais", duree: "50min", prix: "45.000 / 50.000 fcfa" },
+          { name: "Massage Balinais", duree: "50min", prix: "45.000 / 50.000 fcfa", description: "Pressions profondes et étirements pour relâcher les tensions et rééquilibrer le corps." },
           { name: "Massage Balinais", duree: "80min", prix: "65.000 / 70.000 fcfa" },
-          { name: "Massage Ayurvédique", duree: "50min", prix: "45.000 / 50.000 fcfa" },
+          { name: "Massage Ayurvédique", duree: "50min", prix: "45.000 / 50.000 fcfa", description: "Des mouvements enveloppants aux huiles chaudes pour harmoniser le corps et l'esprit." },
           { name: "Massage Ayurvédique", duree: "80min", prix: "65.000 / 70.000 fcfa" },
-          { name: "Massage Oriental", duree: "50min", prix: "45.000 / 50.000 fcfa" },
+          { name: "Massage Oriental", duree: "50min", prix: "45.000 / 50.000 fcfa", description: "Des gestes lents et enveloppants pour un lâcher-prise profond." },
           { name: "Massage Oriental", duree: "80min", prix: "65.000 / 70.000 fcfa" },
         ],
       },
@@ -128,11 +128,11 @@ const CATEGORIES: Categorie[] = [
         title: "Détente Express",
         subtitle: "Soins ciblés en 30 minutes",
         soins: [
-          { name: "Foot Massage Réflexologique", duree: "30min", prix: "25.000 / 30.000 fcfa" },
-          { name: "Radiance Visage", duree: "30min", prix: "25.000 / 30.000 fcfa" },
-          { name: "Massage du Dos", duree: "30min", prix: "25.000 / 30.000 fcfa" },
-          { name: "Destress Massage des Jambes", duree: "30min", prix: "25.000 / 30.000 fcfa" },
-          { name: "Massage Visage Énergétique — Cristal de Roche, Quartz & Jade", duree: "30min", prix: "45.000 / 50.000 fcfa" },
+          { name: "Foot Massage Réflexologique", duree: "30min", prix: "25.000 / 30.000 fcfa", description: "Une stimulation ciblée des zones réflexes pour rééquilibrer le corps." },
+          { name: "Radiance Visage", duree: "30min", prix: "25.000 / 30.000 fcfa", description: "Un éclat immédiat pour une peau fraîche et lumineuse." },
+          { name: "Massage du Dos", duree: "30min", prix: "25.000 / 30.000 fcfa", description: "Un relâchement ciblé pour libérer les tensions du dos et des épaules." },
+          { name: "Destress Massage des Jambes", duree: "30min", prix: "25.000 / 30.000 fcfa", description: "Des gestes drainants pour une sensation immédiate de légèreté." },
+          { name: "Massage Visage Énergétique — Cristal de Roche, Quartz & Jade", duree: "30min", prix: "45.000 / 50.000 fcfa", description: "Des gestes précis aux pierres pour détendre les traits et raviver l'éclat." },
         ],
       },
       {
@@ -140,14 +140,14 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Énergie minérale & profondeur",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Massage Corps Énergétique au Quartz Rose & Jade", duree: "60min", prix: "85.000 / 90.000 fcfa" },
+          { name: "Massage Corps Énergétique au Quartz Rose & Jade", duree: "60min", prix: "85.000 / 90.000 fcfa", description: "L'énergie des pierres pour rééquilibrer le corps et installer une profonde sérénité." },
         ],
       },
       {
         title: "Spa Signature",
         subtitle: "L'expérience ultime",
         soins: [
-          { name: "Signature Détente à l'Orientale", duree: "90min", prix: "75.000 / 80.000 fcfa" },
+          { name: "Signature Détente à l'Orientale", duree: "90min", prix: "75.000 / 80.000 fcfa", description: "Hammam bien-être, pureté du visage et massage oriental pour une détente profonde du corps et de l'esprit." },
         ],
       },
     ],
@@ -190,7 +190,7 @@ const CATEGORIES: Categorie[] = [
   },
   {
     id: "forfaits",
-    label: "Forfaits & Rituels",
+    label: "Rituels",
     num: "05",
     sections: [
       {
@@ -198,8 +198,8 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Expériences immersives & voyages sensoriels",
         brand: "SULTANE DE SABA",
         soins: [
-          { name: "Escale Balinaise", duree: "2H", prix: "90.000 / 95.000 fcfa" },
-          { name: "Voyage Ayurvédique", duree: "2H30", prix: "110.000 / 115.000 fcfa" },
+          { name: "Escale Balinaise", duree: "2H", prix: "90.000 / 95.000 fcfa", description: "Gommage aromatique, pureté du visage et massage balinais pour une évasion inspirée de Bali." },
+          { name: "Voyage Ayurvédique", duree: "2H30", prix: "110.000 / 115.000 fcfa", description: "Gommage, enveloppement, pureté du visage et massage ayurvédique pour rééquilibrer le corps en profondeur." },
           { name: "Détente à l'Orientale", duree: "3H", prix: "150.000 / 155.000 fcfa" },
         ],
       },
@@ -208,10 +208,10 @@ const CATEGORIES: Categorie[] = [
         subtitle: "Protocoles complets haute performance",
         brand: "GEMOLOGY",
         soins: [
-          { name: "Soin Relaxant Minéral du Volcan Rotorua", badge: "Nouvelle-Zélande", duree: "1H15", prix: "95.000 / 100.000 fcfa" },
-          { name: "Soin Détoxifiant Feuilles de Thé & Fève de Cacao", duree: "1H15", prix: "95.000 / 100.000 fcfa" },
-          { name: "Soin Minéral Anti-Âge Rose Grenat", duree: "1H15", prix: "95.000 / 100.000 fcfa" },
-          { name: "Soin Tonifiant Menthe & Prêle des Champs", duree: "1H15", prix: "95.000 / 100.000 fcfa" },
+          { name: "Soin Relaxant Minéral du Volcan Rotorua", badge: "Nouvelle-Zélande", duree: "1H15", prix: "95.000 / 100.000 fcfa", description: "Une détente profonde inspirée des richesses volcaniques pour relâcher le corps et revitaliser la peau." },
+          { name: "Soin Détoxifiant Feuilles de Thé & Fève de Cacao", duree: "1H15", prix: "95.000 / 100.000 fcfa", description: "Une purification du corps pour retrouver légèreté et vitalité." },
+          { name: "Soin Minéral Anti-Âge Rose Grenat", duree: "1H15", prix: "95.000 / 100.000 fcfa", description: "Une action ciblée pour raffermir la peau et préserver son éclat." },
+          { name: "Soin Tonifiant Menthe & Prêle des Champs", duree: "1H15", prix: "95.000 / 100.000 fcfa", description: "Une fraîcheur stimulante pour réveiller le corps et dynamiser la peau." },
         ],
       },
     ],
@@ -255,8 +255,16 @@ export default function CarteDesSoins() {
   }, []);
 
   const switchTab = (id: string) => {
-    if (id === activeId) return;
     setActiveId(id);
+    setTimeout(() => {
+      if (!contentRef.current) return;
+      const navbarH = window.innerWidth >= 768 ? 120 : 80;
+      const tabNavH = navRef.current?.offsetHeight ?? 55;
+      const top = contentRef.current.getBoundingClientRect().top + window.scrollY - navbarH - tabNavH - 8;
+      const lenis = (window as any).lenis;
+      if (lenis) lenis.scrollTo(top, { duration: 0.8, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+      else window.scrollTo({ top, behavior: 'smooth' });
+    }, 50);
   };
 
   const activeCat = CATEGORIES.find((c) => c.id === activeId)!;
@@ -433,33 +441,43 @@ export default function CarteDesSoins() {
                         variants={fadeUp}
                         initial="hidden"
                         animate="show"
-                        className="flex items-center justify-between gap-4 py-4 group"
+                        className="flex items-start justify-between gap-4 py-4 group"
                         style={{ borderColor: BORDER }}
                       >
-                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
                           <div
                             className="w-1 h-1 rounded-full flex-shrink-0 transition-transform duration-300 group-hover:scale-[2]"
                             style={{ backgroundColor: ACCENT }}
                           />
                           <div className="min-w-0">
-                            <span
-                              className="text-[14px] md:text-[15px] font-light leading-snug"
-                              style={{ color: TEXT }}
-                            >
-                              {soin.name}
-                            </span>
-                            {soin.badge && (
+                            <div className="flex flex-wrap items-baseline gap-x-2">
                               <span
-                                className="ml-2 text-[10px] uppercase tracking-[0.15em]"
-                                style={{ color: ACCENT }}
+                                className="text-[14px] md:text-[15px] font-light leading-snug"
+                                style={{ color: TEXT }}
                               >
-                                — {soin.badge}
+                                {soin.name}
                               </span>
+                              {soin.badge && (
+                                <span
+                                  className="text-[10px] uppercase tracking-[0.15em]"
+                                  style={{ color: ACCENT }}
+                                >
+                                  — {soin.badge}
+                                </span>
+                              )}
+                            </div>
+                            {soin.description && (
+                              <p
+                                className="text-[11px] font-light leading-relaxed mt-0.5 italic"
+                                style={{ color: SECONDARY }}
+                              >
+                                {soin.description}
+                              </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-6 flex-shrink-0">
+                        <div className="flex items-start gap-6 flex-shrink-0 pt-0.5">
                           {soin.duree && (
                             <span
                               className="hidden sm:block text-[11px] uppercase tracking-[0.2em] font-light"

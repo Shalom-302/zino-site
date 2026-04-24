@@ -102,12 +102,27 @@ const CATALOGUE = [
   },
 ];
 
-const HEURES = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-  "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-];
+const generateHeures = (start: string, end: string): string[] => {
+  const result: string[] = [];
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let h = sh, m = sm;
+  while (h * 60 + m <= eh * 60 + em) {
+    result.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    m += 30;
+    if (m >= 60) { h++; m -= 60; }
+  }
+  return result;
+};
+
+const getHeuresForDay = (jour: string): string[] => {
+  if (!jour) return generateHeures("06:00", "21:30");
+  const d = new Date(jour + "T12:00:00");
+  const dow = d.getDay(); // 0=Sun, 6=Sat
+  if (dow === 0) return generateHeures("08:00", "17:30"); // Dim & Fériés: 08H–18H
+  if (dow === 6) return generateHeures("07:00", "19:30"); // Samedi: 07H–20H
+  return generateHeures("06:00", "21:30");                // Lun–Ven: 06H–22H
+};
 
 const ReservationPage = () => {
   const { environment } = useEnvironment();
@@ -215,6 +230,9 @@ const ReservationPage = () => {
       const result = await sendReservationEmail(formData);
       if (result.success) {
         setIsSuccess(true);
+        const lenis = (window as any).lenis;
+        if (lenis) lenis.scrollTo(0, { duration: 1.2, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
           setIsSuccess(false);
           setFormData({ nom: "", prenom: "", phone: "", email: "", type: environment || "fitness", note: "", soins: [], jour: "", heure: "" });
@@ -236,7 +254,7 @@ const ReservationPage = () => {
       {/* HERO */}
       <section className="relative h-[45vh] md:h-[55vh] flex items-end justify-start overflow-hidden">
         <Image
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772375328074.png?width=8000&height=8000&resize=contain"
+          src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1800&q=80"
           alt="Reservation"
           fill
           className={`object-cover scale-105${isSpa ? '' : ' grayscale'}`}
@@ -633,10 +651,10 @@ const ReservationPage = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-0 right-0 z-50 mt-1 shadow-2xl max-h-56 overflow-y-auto"
+                            className="absolute top-full left-0 right-0 z-50 mt-1 shadow-2xl max-h-72 overflow-y-auto"
                             style={{ backgroundColor: dropdownBg, border: `1px solid ${dropdownBorder}` }}
                           >
-                            {HEURES.map((h) => {
+                            {getHeuresForDay(formData.jour).map((h) => {
                               const isPris = creneauxPris.includes(h);
                               return (
                                 <button

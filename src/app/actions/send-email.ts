@@ -2,7 +2,7 @@
 
 import nodemailer from "nodemailer";
 import { db } from "@/lib/firebase-db";
-import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import path from "path";
 
 const SPA_LOGO_CID = "logo-spa@zfitspa";
@@ -479,15 +479,6 @@ export async function sendRescheduleEmail(payload: {
   newDate: string;
   newTime: string;
 }) {
-  try {
-    await updateDoc(doc(db, "reservations", payload.id), {
-      date_reservation: payload.newDate,
-      heure: payload.newTime,
-    });
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-
   if (!payload.email) return { success: true };
 
   const transporter = nodemailer.createTransport({

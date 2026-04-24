@@ -16,7 +16,7 @@ const FITNESS_SPACES = [
   { key: 'space_hbx',            num: '07', label: 'Studio HBX' },
   { key: 'space_terasse',        num: '08', label: 'Terrasse' },
   { key: 'space_consultation',   num: '09', label: 'Salle de Consultation' },
-  { key: 'space_wellness',       num: '10', label: 'Bar' },
+  { key: 'space_wellness',       num: '10', label: 'Healthy Kitchen' },
 ];
 
 const SPA_SPACES = [

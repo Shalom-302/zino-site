@@ -7,6 +7,88 @@ import { motion, AnimatePresence } from "framer-motion";
 import FooterMain from "@/components/sections/footer-main";
 import { useEnvironment } from "@/context/environment-context";
 
+const spaFaqData = [
+  {
+    category: "Réserver votre expérience",
+    questions: [
+      {
+        q: "Comment réserver un soin ?",
+        a: "Vous pouvez réserver votre soin à l'accueil, par téléphone ou directement en ligne.\nNotre équipe reste à votre disposition pour vous conseiller et vous orienter vers l'expérience la plus adaptée à vos besoins."
+      },
+      {
+        q: "Puis-je modifier ou annuler ma réservation ?",
+        a: "Toute modification ou annulation doit être effectuée au moins 24 heures à l'avance. Passé ce délai, le soin pourra être facturé."
+      }
+    ]
+  },
+  {
+    category: "Préparer votre venue",
+    questions: [
+      {
+        q: "À quelle heure dois-je arriver ?",
+        a: "Nous vous recommandons d'arriver 15 minutes avant votre rendez-vous afin de vous installer confortablement et commencer à profiter de l'atmosphère du spa."
+      },
+      {
+        q: "Que se passe-t-il en cas de retard ?",
+        a: "En cas de retard, la durée du soin pourra être ajustée afin de respecter les rendez-vous suivants."
+      }
+    ]
+  },
+  {
+    category: "Votre expérience sur place",
+    questions: [
+      {
+        q: "Que dois-je prévoir ?",
+        a: "Tout est pensé pour votre confort. L'ensemble du nécessaire est mis à votre disposition sur place.\nSi vous souhaitez profiter de l'espace sensoriel (piscine, jacuzzi, sauna, hammam), nous vous invitons à prévoir un maillot de bain."
+      },
+      {
+        q: "Puis-je vivre cette expérience à deux ?",
+        a: "Nous proposons des expériences en duo, idéales pour partager un moment privilégié."
+      }
+    ]
+  },
+  {
+    category: "Bien-être & personnalisation",
+    questions: [
+      {
+        q: "Le soin est-il adapté à mes besoins ?",
+        a: "Chaque soin est ajusté en fonction de vos attentes. Nous vous invitons à échanger avec nos praticiennes avant votre prise en charge."
+      },
+      {
+        q: "Dois-je signaler une condition particulière ?",
+        a: "Afin de garantir votre confort et votre sécurité, merci de nous informer de toute condition spécifique (grossesse, allergies, etc.)."
+      }
+    ]
+  },
+  {
+    category: "Offres & avantages",
+    questions: [
+      {
+        q: "Proposez-vous des tarifs abonnés ?",
+        a: "Des avantages exclusifs sont réservés aux abonnés du Centre."
+      }
+    ]
+  },
+  {
+    category: "Cartes cadeaux",
+    questions: [
+      {
+        q: "Puis-je offrir un soin ?",
+        a: "Nos cartes cadeaux sont disponibles sur l'ensemble de nos soins, pour faire découvrir l'expérience du spa en toute occasion.\nElles sont valables trois mois."
+      }
+    ]
+  },
+  {
+    category: "Paiement",
+    questions: [
+      {
+        q: "Quels sont les moyens de paiement acceptés ?",
+        a: "Nous acceptons les paiements en espèces, par carte bancaire, mobile money et chèque."
+      }
+    ]
+  }
+];
+
 const faqData = [
   {
     category: "Abonnements & Adhésion",
@@ -110,7 +192,9 @@ const FAQItem = ({ question, answer, isOpen, onClick, index, isSpa }: {
             className="overflow-hidden"
           >
             <div className="pb-10 pr-16">
-              <p className="text-[14px] font-light leading-[1.85]" style={{ fontFamily: 'Georgia, serif', color: answerColor }}>{answer}</p>
+              {answer.split('\n').map((line, i) => (
+                <p key={i} className="text-[14px] font-light leading-[1.85]" style={{ fontFamily: 'Georgia, serif', color: answerColor, marginTop: i > 0 ? '0.75em' : undefined }}>{line}</p>
+              ))}
             </div>
           </motion.div>
         )}
@@ -195,7 +279,7 @@ const FAQPage = () => {
       {/* FAQ CONTENT */}
       <section className="max-w-[860px] mx-auto px-6 md:px-10 py-28">
         <div className="space-y-20">
-          {faqData.map((category, catIdx) => (
+          {(isSpa ? spaFaqData : faqData).map((category, catIdx) => (
             <div key={catIdx}>
               <motion.div
                 initial={{ opacity: 0, x: -16 }}

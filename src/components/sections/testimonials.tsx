@@ -13,7 +13,7 @@ type FilterKey = 'TOUS' | ActivityCategory;
 
 const FILTER_LABELS: Array<{ key: FilterKey; label: string }> = [
   { key: 'TOUS', label: 'Tous' },
-  { key: 'LES MILLS', label: 'Les Mills' },
+  { key: 'LES MILLS', label: 'Les Mills™' },
   { key: 'HBX', label: 'HBX' },
   { key: 'SIGNATURE Z FIT', label: 'Signature Z Fit' },
   { key: 'CARDIO', label: 'Cardio' },
@@ -49,6 +49,8 @@ const initialActivityData: Array<{ name: string; meta: string; categories: Activ
   { name: "ZUM ZUM", meta: "Danse & Cardio • Signature • 45min", categories: ["SIGNATURE Z FIT", "CARDIO", "DANSE"], description: "Un cours dynamique sur des rythmes entraînants qui transforme l'entraînement en expérience festive. Mouvement. Énergie. Dépense calorique.", image: "https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?q=80&w=800&auto=format&fit=crop", key: "dance_zum_zum" },
   { name: "KIDS BOXING", meta: "Boxe éducative • Kids • 45min", categories: ["SIGNATURE Z FIT", "COMBAT", "KIDS"], description: "Un cours ludique et encadré pour développer coordination, discipline et confiance en soi. Respect. Agilité. Maîtrise.", image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?q=80&w=800&auto=format&fit=crop", key: "kids_boxing" },
   { name: "KIDS CROSS", meta: "Parcours & Agilité • Kids • 45min", categories: ["SIGNATURE Z FIT", "KIDS"], description: "Un entraînement adapté aux enfants combinant jeux, coordination et renforcement global. Énergie. Esprit d'équipe. Développement physique.", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/46df7e95-aa88-4028-8d8e-1e4e9c59c77d/image-1772145364502.png", key: "cross_kids" },
+  { name: "BOOTCAMP", meta: "Full Body & Cardio • Signature • 45min", categories: ["SIGNATURE Z FIT", "RENFORCEMENT", "CARDIO", "HIIT"], description: "Un entraînement dynamique et complet, conçu pour repousser vos limites dans une ambiance motivante et conviviale.\n\nLe Bootcamp combine cardio, renforcement musculaire, endurance et exercices fonctionnels pour travailler l'ensemble du corps. Il peut être pratiqué en salle ou en extérieur, avec ou sans équipement, selon les objectifs et l'intensité recherchée. Encadré par nos coachs, chaque séance s'adapte à votre niveau tout en vous aidant à améliorer votre condition physique, votre énergie et votre confiance en vous.\n\nIdéal pour celles et ceux qui recherchent un challenge sportif efficace, stimulant et accessible.", image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=800&auto=format&fit=crop", key: "bootcamp" },
+  { name: "RANDONNÉE", meta: "Nature & Endurance • Signature • Variable", categories: ["SIGNATURE Z FIT", "CARDIO"], description: "Une parenthèse de bien-être entre nature et mouvement.\n\nNos randonnées sont pensées comme une expérience alliant activité physique douce, découverte et déconnexion. Elles permettent de travailler l'endurance, la respiration et le tonus musculaire tout en profitant d'un cadre apaisant et ressourçant.\n\nAccessible à différents niveaux, la randonnée est également idéale pour créer une véritable communauté, favoriser les échanges et partager des moments authentiques en groupe, dans une atmosphère conviviale et inspirante.", image: "https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=800&auto=format&fit=crop", key: "randonnee" },
 ];
 
 const TestimonialsSection = ({ initialImages, envImages }: { initialImages?: Record<string, { url: string, type: string }>; envImages?: Record<string, { url: string; type: string }> }) => {

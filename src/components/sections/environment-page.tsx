@@ -195,7 +195,7 @@ export default function EnvironmentPage({
             </section>
           )}
 
-          <OurCoaches initialImages={initialImages} />
+          <OurCoaches />
           <CTAJourney
             initialImage={initialImages["cta_journey"]?.url}
             envImage={envImages["cta_journey"]?.url}

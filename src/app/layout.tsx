@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     "bien-être Abidjan",
     "piscine Abidjan",
     "musculation Abidjan",
-    "Les Smiles Abidjan",
+    "Les Mills Abidjan",
     "HBX Abidjan",
     "Body Combat Abidjan",
     "Body Attack Abidjan",
