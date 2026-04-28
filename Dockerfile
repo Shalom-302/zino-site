@@ -1,20 +1,16 @@
-# --- Etape 1 : Installation des dépendances ---
 # ─────────────────────────────────────────────
-# Stage 1: Install dependencies
+# 1. Install deps (cached layer)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-# On installe TOUTES les dépendances (y compris devDependencies)
-RUN npm ci
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN apk add --no-cache libc6-compat
 
-# --- Etape 2 : Construction du projet ---
+COPY package.json package-lock.json ./
+RUN npm ci
+
 # ─────────────────────────────────────────────
-# Stage 2: Build the Next.js application
+# 2. Build app
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -22,20 +18,18 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Variables d'argument pour le build
-# Build-time env vars (public only — no secrets)
+# Build-time env (public only)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-# --- Etape 3 : Runner final ---
 # ─────────────────────────────────────────────
-# Stage 3: Production runner (minimal image)
+# 3. Production runner (ultra léger)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -43,24 +37,23 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache dumb-init curl libc6-compat
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+# Sécurité + init
+RUN apk add --no-cache dumb-init libc6-compat
 
-# Create non-root user for security
+# User sécurisé (UNE SEULE FOIS)
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 nextjs
+    adduser --system --uid 1001 nextjs --ingroup nodejs
 
-# Copy standalone build output
+# Copier uniquement le nécessaire
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-# ✅ PORT STAGING (TA VERSION)
+# PORT STAGING
 EXPOSE 3002
 ENV PORT=3002
-
 ENV HOSTNAME="0.0.0.0"
 
 ENTRYPOINT ["dumb-init", "--"]
