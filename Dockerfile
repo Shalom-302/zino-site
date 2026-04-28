@@ -1,15 +1,16 @@
 # ─────────────────────────────────────────────
-# Stage 1: Install dependencies
+# 1. Install deps (cached layer)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # ─────────────────────────────────────────────
-# Stage 2: Build the Next.js application
+# 2. Build app
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -17,18 +18,18 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env vars (public only — no secrets)
+# Build-time env (public only)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
 # ─────────────────────────────────────────────
-# Stage 3: Production runner (minimal image)
+# 3. Production runner (ultra léger)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -36,19 +37,24 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 nextjs
+# Sécurité + init
+RUN apk add --no-cache dumb-init libc6-compat
 
-# Copy standalone build output
+# User sécurisé (UNE SEULE FOIS)
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs --ingroup nodejs
+
+# Copier uniquement le nécessaire
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
-ENV PORT=3000
+# PORT STAGING
+EXPOSE 3002
+ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "server.js"]

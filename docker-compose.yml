@@ -1,22 +1,29 @@
 version: "3.9"
 
 services:
-  zfitspa:
+  app:
+    container_name: zfitspa-app
+
     build:
       context: .
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
     image: zfitspa:latest
-    container_name: zfitspa-app
     restart: unless-stopped
+
     ports:
-      - "3000:3000"
+      - "3002:3002"
+
     environment:
+      NODE_ENV: production
+
       # Supabase (public)
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
       # Email (Hostinger SMTP)
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_PORT: ${EMAIL_PORT}
@@ -24,9 +31,16 @@ services:
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
       EMAIL_TO: ${EMAIL_TO}
+
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3002"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 5s
+      retries: 5
       start_period: 30s
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
