@@ -1,19 +1,11 @@
-version: "3.9"
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 
     image: zfitspa:latest
     restart: unless-stopped
-
-    # ⚠️ PAS de container_name
-    # ⚠️ PAS de ports (Traefik gère l'accès)
 
     expose:
       - "3002"
@@ -32,15 +24,8 @@ services:
       EMAIL_TO: ${EMAIL_TO}
 
     networks:
-      - dokploy
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      - dokploy-network   # ✅ LE BON NOM
 
 networks:
-  dokploy:
+  dokploy-network:
     external: true
