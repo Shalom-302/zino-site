@@ -2,8 +2,6 @@ version: "3.9"
 
 services:
   app:
-    container_name: zfitspa-app
-
     build:
       context: .
       dockerfile: Dockerfile
