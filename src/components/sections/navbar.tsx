@@ -7,8 +7,7 @@ import { Plus, X } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useEnvironment } from "@/context/environment-context";
 import { usePageTransition } from "@/context/transition-context";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 
 const DEFAULT_FITNESS_LINKS = [
   { name: "Cours", href: "/#nos-cours" },
@@ -83,16 +82,17 @@ const NavbarInner = () => {
     if (!environment) return;
 
     const fetchNavLinks = async () => {
-      const snap = await getDocs(query(
-        collection(db, "environment_content"),
-        where("environment", "==", environment),
-        where("section", "==", "navbar")
-      ));
+      const { data: snapData } = await supabase
+        .from("environment_content")
+        .select("*")
+        .eq("environment", environment)
+        .eq("section", "navbar");
 
       const defaults = environment === "spa" ? DEFAULT_SPA_LINKS : DEFAULT_FITNESS_LINKS;
-      if (!snap.empty) {
+      const snap = snapData || [];
+      if (snap.length > 0) {
         const map: Record<string, string> = {};
-        snap.forEach((d) => { map[d.data().key] = d.data().value; });
+        snap.forEach((d) => { map[d.key] = d.value; });
         // For fitness: use Supabase only if it has the 5-link structure
         // For spa: always use defaults (4 links)
         if (environment === "fitness" && (map["link4_label"] || map["link4_href"] || map["link5_label"] || map["link5_href"])) {

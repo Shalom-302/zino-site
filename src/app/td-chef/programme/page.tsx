@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { db, auth } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, addDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Loader2, Save, RefreshCcw } from "lucide-react";
 
@@ -69,17 +67,17 @@ export default function TdChefProgrammePage() {
   useEffect(() => { checkUser(); }, []);
 
   const checkUser = async () => {
-    onAuthStateChanged(auth, (user) => {
-      if (!user) { router.push("/td-chef/login"); return; }
-      fetchSlots();
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push("/td-chef/login"); return; }
+    fetchSlots();
   };
 
   const fetchSlots = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "programme"));
-      setSlots(snap.docs.map(d => ({ id: d.id, ...d.data() } as Slot)));
+      const { data: snap, error } = await supabase.from("programme").select("*");
+      if (error) throw error;
+      setSlots((snap || []) as Slot[]);
     } catch { /* no-op */ }
     setEdited({});
     setLoading(false);
@@ -115,9 +113,9 @@ export default function TdChefProgrammePage() {
           (s) => s.categorie === categorie && s.jour === jour && s.heure === heure
         );
         if (existing) {
-          await updateDoc(doc(db, "programme", existing.id), { activite });
+          await supabase.from("programme").update({ activite }).eq("id", existing.id);
         } else {
-          await addDoc(collection(db, "programme"), { categorie, jour, heure, activite });
+          await supabase.from("programme").insert({ categorie, jour, heure, activite });
         }
       }
       toast.success(`${toSave.length} case(s) sauvegardée(s)`);

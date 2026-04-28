@@ -3,8 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { useEnvironment } from "@/context/environment-context";
 import HeroSection from "@/components/sections/hero";
 import ClubPresentation from "@/components/sections/club-presentation";
@@ -54,14 +53,14 @@ export default function EnvironmentPage({
   };
 
   const fetchForEnv = async (env: string) => {
-    const [contentSnap, imgSnap] = await Promise.all([
-      getDocs(query(collection(db, "environment_content"), where("environment", "==", env))),
-      getDocs(query(collection(db, "environment_images"), where("environment", "==", env))),
+    const [contentRes, imgRes] = await Promise.all([
+      supabase.from("environment_content").select("*").eq("environment", env),
+      supabase.from("environment_images").select("*").eq("environment", env),
     ]);
     const contentMap: EnvContent = {};
-    contentSnap.forEach((d) => { const r = d.data(); contentMap[`${r.section}_${r.key}`] = r.value; });
+    (contentRes.data || []).forEach((r) => { contentMap[`${r.section}_${r.key}`] = r.value; });
     const imgMap: EnvImages = {};
-    imgSnap.forEach((d) => { const r = d.data(); imgMap[r.image_key] = { url: r.image_url, type: r.media_type }; });
+    (imgRes.data || []).forEach((r) => { imgMap[r.image_key] = { url: r.image_url, type: r.media_type }; });
     cacheRef.current[env] = { content: contentMap, images: imgMap };
     return { contentMap, imgMap };
   };

@@ -1,8 +1,7 @@
 'use server';
 
 import nodemailer from 'nodemailer';
-import { db } from '@/lib/firebase-db';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { supabaseServer } from '@/lib/supabase-server';
 
 function buildNewsletterHtml(subject: string, body: string): string {
   return `<!DOCTYPE html>
@@ -94,13 +93,16 @@ export async function sendNewsletter(subject: string, body: string): Promise<{
     return { success: false, sent: 0, failed: 0, error: 'Sujet et contenu requis.' };
   }
 
-  // Fetch all subscribers from Firestore
   let emails: string[] = [];
   try {
-    const snap = await getDocs(query(collection(db, 'newsletter_subscribers'), orderBy('created_at', 'asc')));
-    emails = snap.docs.map(d => d.data().email as string).filter(Boolean);
+    const { data, error } = await supabaseServer
+      .from('newsletter_subscribers')
+      .select('email')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    emails = (data || []).map(d => d.email as string).filter(Boolean);
   } catch (err: any) {
-    return { success: false, sent: 0, failed: 0, error: 'Erreur Firebase: ' + err.message };
+    return { success: false, sent: 0, failed: 0, error: 'Erreur Supabase: ' + err.message };
   }
 
   if (emails.length === 0) {

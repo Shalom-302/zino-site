@@ -1,8 +1,7 @@
 "use server";
 
 import nodemailer from "nodemailer";
-import { db } from "@/lib/firebase-db";
-import { collection, addDoc } from "firebase/firestore";
+import { supabaseServer } from "@/lib/supabase-server";
 import path from "path";
 
 const SPA_LOGO_CID = "logo-spa@zfitspa";
@@ -294,7 +293,7 @@ function buildSpaConfirmationHtml(f: FormData) {
 export async function sendReservationEmail(formData: FormData) {
   const isSpa = formData.type === "spa";
 
-  await addDoc(collection(db, "reservations"), {
+  await supabaseServer.from("reservations").insert({
     nom: formData.nom,
     prenom: formData.prenom,
     email: formData.email,
@@ -928,9 +927,8 @@ export async function sendGiftCardEmail(data: GiftCardData) {
     tls: { minVersion: "TLSv1.2", rejectUnauthorized: false },
   });
 
-  // Save to Firestore reservations collection
   const noteMessage = `Bénéficiaire: ${data.beneficiairePrenom} ${data.beneficiaireNom}${data.message ? ` | Message: ${data.message}` : ""}`;
-  await addDoc(collection(db, "reservations"), {
+  await supabaseServer.from("reservations").insert({
     prenom: data.offrantPrenom,
     nom: data.offrantNom,
     telephone: data.offrantPhone,
@@ -988,26 +986,32 @@ export async function createAdminReservation(payload: {
   message: string;
   status: 'pending' | 'approved';
 }) {
-  let docRef: any;
+  let rowId: string;
   try {
-    docRef = await addDoc(collection(db, 'reservations'), {
-      nom:              payload.nom,
-      prenom:           payload.prenom,
-      email:            payload.email || null,
-      telephone:        payload.telephone,
-      type:             payload.type,
-      soin:             payload.soin || null,
-      date_reservation: payload.date_reservation || null,
-      heure:            payload.heure || null,
-      message:          payload.message || null,
-      status:           payload.status,
-      created_at:       new Date().toISOString(),
-    });
+    const { data: inserted, error } = await supabaseServer
+      .from('reservations')
+      .insert({
+        nom:              payload.nom,
+        prenom:           payload.prenom,
+        email:            payload.email || null,
+        telephone:        payload.telephone,
+        type:             payload.type,
+        soin:             payload.soin || null,
+        date_reservation: payload.date_reservation || null,
+        heure:            payload.heure || null,
+        message:          payload.message || null,
+        status:           payload.status,
+        created_at:       new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    rowId = inserted.id;
   } catch (e: any) {
     return { success: false, error: e.message };
   }
 
-  const row = { id: docRef.id, ...payload };
+  const row = { id: rowId, ...payload };
 
   // Send approval email to client if status=approved and email provided
   if (payload.status === 'approved' && payload.email) {

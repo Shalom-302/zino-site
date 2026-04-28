@@ -5,8 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReservationModal } from "@/components/providers/reservation-modal-provider";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 
 const ReservationModal = () => {
   const { isOpen, closeModal } = useReservationModal();
@@ -22,8 +21,8 @@ const ReservationModal = () => {
 
   useEffect(() => {
     const fetchCTAImage = async () => {
-      const d = await getDoc(doc(db, 'site_images', 'cta_journey'));
-      if (d.exists() && d.data().image_url) setBackgroundImage(d.data().image_url);
+      const { data: d } = await supabase.from('site_images').select('image_url').eq('id', 'cta_journey').single();
+      if (d?.image_url) setBackgroundImage(d.image_url);
     };
 
     fetchCTAImage();

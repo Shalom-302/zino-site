@@ -1,13 +1,15 @@
-import { db } from './firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { supabaseServer } from './supabase-server';
 
 export async function getSiteImages() {
   try {
-    const snap = await getDocs(collection(db, 'site_images'));
-    return snap.docs.map(docSnap => ({
-      image_key: docSnap.id,
-      image_url: docSnap.data().image_url || '',
-      section:   docSnap.data().section   || '',
+    const { data, error } = await supabaseServer
+      .from('site_images')
+      .select('id, image_url, section');
+    if (error) throw error;
+    return (data || []).map((row) => ({
+      image_key: row.id,
+      image_url: row.image_url || '',
+      section: row.section || '',
     }));
   } catch (error) {
     console.error('Error fetching site images:', error);

@@ -3,8 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 const IMG_TOP = "https://actcisklxhxzzgvygdfb.supabase.co/storage/v1/object/public/site-assets/images/healthy_mind_top-15ztn1jhy77.jpg";
 const IMG_BOTTOM = "https://actcisklxhxzzgvygdfb.supabase.co/storage/v1/object/public/site-assets/images/healthy_mind_bottom-fj1qoqqgnz.jpg";
@@ -53,9 +52,9 @@ const ClubPresentation = ({ envContent = {}, environment, envImages }: { envCont
 
     const fetchImages = async () => {
       const keys = ['healthy_mind_top', 'healthy_mind_bottom', 'art_body_top', 'space_muscu', 'spa_sanctuaire_portrait'];
-      const snap = await getDocs(query(collection(db, 'site_images'), where('__name__', 'in', keys)));
+      const { data: snap } = await supabase.from('site_images').select('id, image_url').in('id', keys);
       const map: Record<string, { url: string; type: string }> = {};
-      snap.forEach(d => { map[d.id] = { url: d.data().image_url || '', type: d.data().media_type || 'image' }; });
+      (snap || []).forEach((d: any) => { map[d.id] = { url: d.image_url || '', type: d.media_type || 'image' }; });
       setMedia({
         top:    map['healthy_mind_top']    || { url: IMG_TOP,    type: 'image' },
         bottom: map['healthy_mind_bottom'] || { url: IMG_BOTTOM, type: 'image' },

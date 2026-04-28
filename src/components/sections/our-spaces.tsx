@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { useEnvironment } from '@/context/environment-context';
 
 const FITNESS_SPACES = [
@@ -66,16 +65,16 @@ const OurSpaces = ({ envImages }: { envImages?: Record<string, { url: string; ty
 
     const fetchImages = async () => {
       const keys = SPACES.map(s => s.key);
-      const envSnap = await getDocs(query(collection(db, 'environment_images'), where('image_key', 'in', keys)));
-      if (!envSnap.empty) {
+      const { data: envSnap } = await supabase.from('environment_images').select('*').in('image_key', keys);
+      if (envSnap && envSnap.length > 0) {
         const map: Record<string, string> = {};
-        envSnap.forEach(d => { map[d.data().image_key] = d.data().image_url; });
+        envSnap.forEach((d: any) => { map[d.image_key] = d.image_url; });
         setImages(map);
         return;
       }
-      const snap = await getDocs(query(collection(db, 'site_images'), where('__name__', 'in', keys)));
+      const { data: snap } = await supabase.from('site_images').select('id, image_url').in('id', keys);
       const map: Record<string, string> = {};
-      snap.forEach(d => { map[d.id] = d.data().image_url; });
+      (snap || []).forEach((d: any) => { map[d.id] = d.image_url; });
       setImages(map);
     };
     fetchImages();

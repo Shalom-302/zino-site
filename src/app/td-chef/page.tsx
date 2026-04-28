@@ -2,10 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth, storage } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy, where } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
+import {
+  addCoachAction,
+  saveCoachAction,
+  toggleCoachPublishedAction,
+  deleteCoachAction,
+  upsertSiteImageAction,
+} from './coach-actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -186,33 +190,30 @@ export default function TdChefPage() {
   }, [activeEnv]);
 
   const checkUser = async () => {
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { router.push('/td-chef/login'); setLoading(false); return; }
-      try {
-        await Promise.all([fetchEnvImages(), fetchSiteImages(), fetchEntranceImages(), fetchCoachesInfo('fitness')]);
-      } catch { /* non-blocking */ }
-      finally { setLoading(false); }
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/td-chef/login'); setLoading(false); return; }
+    try {
+      await Promise.all([fetchEnvImages(), fetchSiteImages(), fetchEntranceImages(), fetchCoachesInfo('fitness')]);
+    } catch { /* non-blocking */ }
+    finally { setLoading(false); }
   };
 
   const fetchEnvImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'environment_images'));
-      const data: EnvImage[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as EnvImage));
-      setEnvImages(data.map(img => ({ ...img, image_url: `${img.image_url.split('?')[0]}?t=${Date.now()}` })));
+      const { data, error } = await supabase.from('environment_images').select('*');
+      if (error) throw error;
+      const imgs: EnvImage[] = (data || []).map(r => ({ id: r.id, environment: r.environment, section: r.section, image_key: r.image_key, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type }));
+      setEnvImages(imgs);
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
   };
 
   const fetchEntranceImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'site_images'));
+      const { data } = await supabase.from('site_images').select('id, image_url, media_type').in('id', ['entrance_fitness', 'entrance_spa']);
       const map: Record<string, EntranceImage> = {};
-      snap.docs.forEach(d => {
-        const key = d.id as 'entrance_fitness' | 'entrance_spa';
-        if (key === 'entrance_fitness' || key === 'entrance_spa') {
-          const img = d.data();
-          map[key] = { image_key: key, image_url: `${(img.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: img.media_type || 'image' };
-        }
+      (data || []).forEach(r => {
+        const key = r.id as 'entrance_fitness' | 'entrance_spa';
+        map[key] = { image_key: key, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type || 'image' };
       });
       setEntranceImages(map);
     } catch { /* no-op */ }
@@ -220,22 +221,22 @@ export default function TdChefPage() {
 
   const fetchSiteImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'site_images'));
-      const data: SiteImage[] = snap.docs.map(d => ({ id: d.id, image_key: d.id, ...d.data() } as SiteImage));
-      setSiteImages(data.map(img => ({ ...img, image_url: `${(img.image_url||'').split('?')[0]}?t=${Date.now()}` })));
+      const { data, error } = await supabase.from('site_images').select('*');
+      if (error) throw error;
+      const imgs: SiteImage[] = (data || []).map(r => ({ id: r.id, section: r.section, image_key: r.id, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type }));
+      setSiteImages(imgs);
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
   };
 
   const fetchCoachesInfo = async (env: 'fitness' | 'spa' = 'fitness') => {
     try {
       const prefix = env === 'spa' ? 'spa_coach_' : 'coach_';
-      const snap = await getDocs(query(
-        collection(db, 'coaches_info'),
-        where('coach_key', '>=', prefix),
-        where('coach_key', '<', prefix + '\uf8ff'),
-        orderBy('coach_key'),
-      ));
-      setCoachesInfo(snap.docs.map(d => d.data() as CoachInfo));
+      const { data: allData } = await supabase
+        .from('coaches_info')
+        .select('*')
+        .order('coach_key', { ascending: true });
+      const data = (allData || []).filter((r: any) => r.coach_key.startsWith(prefix));
+      setCoachesInfo((data || []) as CoachInfo[]);
     } catch { /* no-op */ }
   };
 
@@ -243,32 +244,39 @@ export default function TdChefPage() {
     setCoachesInfo(prev => prev.map(c => c.coach_key === coach_key ? { ...c, [field]: value } : c));
   };
 
+  const toggleCoachPublished = async (coach_key: string, newValue: boolean) => {
+    setCoachesInfo(prev => prev.map(c => c.coach_key === coach_key ? { ...c, published: newValue } : c));
+    try {
+      await toggleCoachPublishedAction(coach_key, newValue);
+      toast.success(newValue ? 'Coach publié' : 'Coach mis en brouillon');
+    } catch (e: any) { toast.error('Erreur: ' + e.message); }
+  };
+
   const saveCoachInfo = async (coach_key: string) => {
     const info = coachesInfo.find(c => c.coach_key === coach_key);
     if (!info) return;
     setSavingCoach(coach_key);
     try {
-      await setDoc(doc(db, 'coaches_info', coach_key), {
-        coach_key,
-        name: info.name, title: info.title, description: info.description,
-        published: info.published ?? false,
-        updated_at: new Date().toISOString(),
-      }, { merge: true });
+      await saveCoachAction(info);
       toast.success('Coach sauvegardé');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
     finally { setSavingCoach(null); }
   };
 
   const uploadFile = async (file: File, uploadId: string): Promise<string> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error('Non authentifié');
     const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
     const fileExt = file.name.split('.').pop();
     const filePath = `${isVideo ? 'videos' : 'images'}/${uploadId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    // Upload directly to Firebase Storage — no server proxy, no size limits
-    const fileRef = storageRef(storage, filePath);
-    await uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
-    const url = await getDownloadURL(fileRef);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('path', filePath);
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: HeadersInit = session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {};
+    const res = await fetch('/api/upload', { method: 'POST', body: fd, headers });
+    if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+    const { url } = await res.json();
     return url;
   };
 
@@ -278,11 +286,12 @@ export default function TdChefPage() {
       setUploading(uploadId);
       const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
       const publicUrl = await uploadFile(file, uploadId);
-      await setDoc(doc(db, 'environment_images', `${env}_${imageKey}`), {
+      await supabase.from('environment_images').upsert({
+        id: `${env}_${imageKey}`,
         environment: env, image_key: imageKey, section: imageKey,
         image_url: publicUrl, media_type: isVideo ? 'video' : 'image',
         updated_at: new Date().toISOString(),
-      }, { merge: true });
+      }, { onConflict: 'id' });
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setEnvImages(prev => {
         const exists = prev.some(img => img.environment === env && img.image_key === imageKey);
@@ -301,10 +310,11 @@ export default function TdChefPage() {
       setUploading(uploadId);
       const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
       const publicUrl = await uploadFile(file, imageKey);
-      await setDoc(doc(db, 'site_images', imageKey), {
+      await supabase.from('site_images').upsert({
+        id: imageKey,
         image_url: publicUrl, media_type: isVideo ? 'video' : 'image',
         updated_at: new Date().toISOString(),
-      }, { merge: true });
+      }, { onConflict: 'id' });
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setEntranceImages(prev => ({ ...prev, [imageKey]: { image_key: imageKey, image_url: busted, media_type: isVideo ? 'video' : 'image' } }));
       toast.success(`${isVideo ? 'Vidéo' : 'Image'} mise à jour`);
@@ -316,18 +326,9 @@ export default function TdChefPage() {
     const prefix = activeEnv === 'spa' ? 'spa_coach_' : 'coach_';
     setAddingCoach(true);
     try {
-      const maxNum = coachesInfo.reduce((max, c) => {
-        const num = parseInt(c.coach_key.replace(prefix, ''), 10);
-        return isNaN(num) ? max : Math.max(max, num);
-      }, 0);
-      const newKey = `${prefix}${maxNum + 1}`;
-      const newCoach: CoachInfo = {
-        coach_key: newKey, name: 'NOUVEAU COACH', title: 'Coach', description: '',
-      };
-      await setDoc(doc(db, 'coaches_info', newKey), {
-        coach_key: newKey, name: newCoach.name, title: newCoach.title, description: newCoach.description,
-        updated_at: new Date().toISOString(),
-      });
+      const existingKeys = coachesInfo.map(c => c.coach_key);
+      const newKey = await addCoachAction(prefix, coachesInfo.length, existingKeys);
+      const newCoach: CoachInfo = { coach_key: newKey, name: 'NOUVEAU COACH', title: 'Coach', description: '' };
       setCoachesInfo(prev => [...prev, newCoach]);
       toast.success('Coach ajouté');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
@@ -336,10 +337,7 @@ export default function TdChefPage() {
 
   const deleteCoach = async (coachKey: string) => {
     try {
-      await Promise.all([
-        deleteDoc(doc(db, 'coaches_info', coachKey)),
-        deleteDoc(doc(db, 'site_images', coachKey)),
-      ]);
+      await deleteCoachAction(coachKey);
       setCoachesInfo(prev => prev.filter(c => c.coach_key !== coachKey));
       toast.success('Coach supprimé');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
@@ -351,13 +349,7 @@ export default function TdChefPage() {
     try {
       setUploading(uploadId);
       const publicUrl = await uploadFile(file, uploadId);
-      await setDoc(doc(db, 'site_images', imageKey), {
-        image_key: imageKey,
-        image_url: publicUrl,
-        media_type: 'image',
-        section: 'coaches',
-        updated_at: new Date().toISOString(),
-      }, { merge: true });
+      await upsertSiteImageAction(imageKey, publicUrl, 'image');
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setSiteImages(prev => {
         const exists = prev.some(img => img.image_key === imageKey);
@@ -564,7 +556,7 @@ export default function TdChefPage() {
                       <div className="flex items-center gap-2 py-2 border-t border-black/6">
                         <button
                           type="button"
-                          onClick={() => handleCoachInfoChange(coach.coach_key, 'published', !coach.published)}
+                          onClick={() => toggleCoachPublished(coach.coach_key, !coach.published)}
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${coach.published ? 'bg-emerald-500' : 'bg-black/20'}`}
                           role="switch"
                           aria-checked={coach.published ?? false}

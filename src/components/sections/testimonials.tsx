@@ -4,8 +4,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { useEnvironment } from '@/context/environment-context';
 
 type ActivityCategory = 'LES MILLS' | 'HBX' | 'SIGNATURE Z FIT' | 'CARDIO' | 'RENFORCEMENT' | 'COMBAT' | 'CYCLING' | 'HIIT' | 'DANSE' | 'MOBILITÉ' | 'KIDS';
@@ -143,11 +142,11 @@ const TestimonialsSection = ({ initialImages, envImages }: { initialImages?: Rec
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const snap = await getDocs(query(collection(db, 'site_images'), where('section', '==', 'activities')));
-      if (!snap.empty) {
+      const { data: snap } = await supabase.from('site_images').select('id, image_url').eq('section', 'activities');
+      if (snap && snap.length > 0) {
         setActivities(prev => prev.map(activity => {
-          const d = snap.docs.find(doc => doc.id === activity.key);
-          return d ? { ...activity, image: d.data().image_url } : activity;
+          const d = snap.find(row => row.id === activity.key);
+          return d ? { ...activity, image: d.image_url } : activity;
         }));
       }
     };

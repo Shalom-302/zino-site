@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 interface PersonalizedTrainingProps {
   initialTop?: string;
@@ -17,13 +16,13 @@ const PersonalizedTraining = ({ initialTop, initialBottom }: PersonalizedTrainin
   useEffect(() => {
     const fetchImages = async () => {
       const [topDoc, altDoc, botDoc] = await Promise.all([
-        getDoc(doc(db, 'site_images', 'art_body_top')),
-        getDoc(doc(db, 'site_images', 'art_body')),
-        getDoc(doc(db, 'site_images', 'art_body_bottom')),
+        supabase.from('site_images').select('image_url').eq('id', 'art_body_top').single(),
+        supabase.from('site_images').select('image_url').eq('id', 'art_body').single(),
+        supabase.from('site_images').select('image_url').eq('id', 'art_body_bottom').single(),
       ]);
-      if (topDoc.exists()) setImageTop(topDoc.data().image_url);
-      else if (altDoc.exists()) setImageTop(altDoc.data().image_url);
-      if (botDoc.exists()) setImageBottom(botDoc.data().image_url);
+      if (topDoc.data?.image_url) setImageTop(topDoc.data.image_url);
+      else if (altDoc.data?.image_url) setImageTop(altDoc.data.image_url);
+      if (botDoc.data?.image_url) setImageBottom(botDoc.data.image_url);
     };
 
     fetchImages();

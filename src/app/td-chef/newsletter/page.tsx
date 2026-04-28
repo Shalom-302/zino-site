@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth } from '@/lib/firebase';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Loader2, Download, RefreshCcw, Mail, Users, Trash2 } from 'lucide-react';
 
@@ -22,18 +20,22 @@ export default function NewsletterPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) { router.push('/td-chef/login'); return; }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { router.push('/td-chef/login'); return; }
       fetchSubscribers();
     });
-    return () => unsub();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!session) router.push('/td-chef/login');
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   async function fetchSubscribers() {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, 'newsletter_subscribers'), orderBy('created_at', 'desc')));
-      setSubscribers(snap.docs.map(d => ({ id: d.id, email: d.data().email as string, created_at: d.data().created_at as string })));
+      const { data: snap, error } = await supabase.from('newsletter_subscribers').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setSubscribers((snap || []).map(r => ({ id: r.id, email: r.email as string, created_at: r.created_at as string })));
     } catch (e: any) {
       toast.error('Erreur: ' + e.message);
     }
@@ -43,7 +45,7 @@ export default function NewsletterPage() {
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
-      await deleteDoc(doc(db, 'newsletter_subscribers', id));
+      await supabase.from('newsletter_subscribers').delete().eq('id', id);
       setSubscribers(prev => prev.filter(s => s.id !== id));
       toast.success('Abonné supprimé');
     } catch (e: any) {

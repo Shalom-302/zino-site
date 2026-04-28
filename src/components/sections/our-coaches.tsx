@@ -4,8 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { useEnvironment } from '@/context/environment-context';
 
 type Coach = {
@@ -64,11 +63,13 @@ const OurCoaches = () => {
 
     const fetchCoaches = async () => {
       const [infoSnap, imgSnap] = await Promise.all([
-        getDocs(query(collection(db, 'coaches_info'), where('coach_key', '>=', prefix), where('coach_key', '<', prefix + '\uf8ff'))),
-        getDocs(query(collection(db, 'site_images'), where('__name__', '>=', prefix), where('__name__', '<', prefix + '\uf8ff'))),
+        supabase.from('coaches_info').select('*'),
+        supabase.from('site_images').select('id, image_url'),
       ]);
-      const infoData = infoSnap.docs.map(d => d.data());
-      const imgData = imgSnap.docs.map(d => ({ image_key: d.id, image_url: d.data().image_url }));
+      const infoData = (infoSnap.data || []).filter((d: any) => d.coach_key.startsWith(prefix));
+      const imgData = (imgSnap.data || [])
+        .filter((d: any) => d.id.startsWith(prefix))
+        .map((d: any) => ({ image_key: d.id, image_url: d.image_url }));
 
       const entries = infoData
         .filter((info) => info.published === true)

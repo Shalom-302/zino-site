@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { sendNewsletter } from '@/app/actions/send-newsletter';
 import {
@@ -23,17 +21,20 @@ export default function EnvoyerNewsletterPage() {
   const [body, setBody]                 = useState('');
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) { router.push('/td-chef/login'); return; }
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) { router.push('/td-chef/login'); return; }
       await fetchCount();
     });
-    return () => unsub();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!session) router.push('/td-chef/login');
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   async function fetchCount() {
     try {
-      const snap = await getDocs(collection(db, 'newsletter_subscribers'));
-      setSubCount(snap.size);
+      const { count } = await supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true });
+      setSubCount(count ?? 0);
     } catch {
       setSubCount(0);
     }
