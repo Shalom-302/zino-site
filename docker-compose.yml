@@ -12,11 +12,15 @@ services:
     image: zfitspa:latest
     restart: unless-stopped
 
-    # ⚠️ PAS de container_name
-    # ⚠️ PAS de ports (Traefik gère l'accès)
+    hostname: app
 
     expose:
       - "3002"
+
+    networks:
+      dokploy-network:
+        aliases:
+          - app
 
     environment:
       NODE_ENV: production
@@ -31,11 +35,8 @@ services:
       EMAIL_PASS: ${EMAIL_PASS}
       EMAIL_TO: ${EMAIL_TO}
 
-    networks:
-      - dokploy-network
-
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
