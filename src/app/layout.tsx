@@ -93,9 +93,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://zfitspa.ci",
   },
-  verification: {
-    google: "google-site-verification",
-  },
 };
 
 export default function RootLayout({
@@ -106,7 +103,6 @@ export default function RootLayout({
   return (
       <html lang="fr">
       <head>
-        <link rel="canonical" href="https://zfitspa.ci" />
         <meta name="geo.region" content="CI-AB" />
         <meta name="geo.placename" content="Abidjan, Côte d'Ivoire" />
         <meta name="geo.position" content="5.3599517;-4.0082563" />

@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { fetchDB } from '@/lib/fetchDB';
+import { proxyUrl } from '@/lib/supabase-url';
 
 const IMG_TOP = "https://actcisklxhxzzgvygdfb.supabase.co/storage/v1/object/public/site-assets/images/healthy_mind_top-15ztn1jhy77.jpg";
 const IMG_BOTTOM = "https://actcisklxhxzzgvygdfb.supabase.co/storage/v1/object/public/site-assets/images/healthy_mind_bottom-fj1qoqqgnz.jpg";
@@ -15,9 +15,9 @@ type MediaItem = { url: string; type: string };
 
 const Media = ({ item, alt, className, sizes }: { item: MediaItem; alt: string; className?: string; sizes?: string }) => {
   if (item.type === 'video') {
-    return <video src={item.url} className={`w-full h-full object-cover ${className || ''}`} autoPlay muted loop playsInline />;
+    return <video src={proxyUrl(item.url)} className={`w-full h-full object-cover ${className || ''}`} autoPlay muted loop playsInline />;
   }
-  return <Image src={item.url} alt={alt} fill className={`object-cover ${className || ''}`} sizes={sizes} unoptimized />;
+  return <Image src={proxyUrl(item.url)} alt={alt} fill className={`object-cover ${className || ''}`} sizes={sizes} unoptimized />;
 };
 
 const ClubPresentation = ({ envContent = {}, environment, envImages }: { envContent?: Record<string, string>; environment?: 'fitness' | 'spa' | null; envImages?: Record<string, { url: string; type: string }> }) => {
@@ -53,9 +53,9 @@ const ClubPresentation = ({ envContent = {}, environment, envImages }: { envCont
 
     const fetchImages = async () => {
       const keys = ['healthy_mind_top', 'healthy_mind_bottom', 'art_body_top', 'space_muscu', 'spa_sanctuaire_portrait'];
-      const snap = await getDocs(query(collection(db, 'site_images'), where('__name__', 'in', keys)));
+      const snap = await fetchDB('site_images', 'id, image_url, media_type', [{ type: 'in', field: 'id', values: keys }]);
       const map: Record<string, { url: string; type: string }> = {};
-      snap.forEach(d => { map[d.id] = { url: d.data().image_url || '', type: d.data().media_type || 'image' }; });
+      snap.forEach((d: any) => { map[d.id] = { url: d.image_url || '', type: d.media_type || 'image' }; });
       setMedia({
         top:    map['healthy_mind_top']    || { url: IMG_TOP,    type: 'image' },
         bottom: map['healthy_mind_bottom'] || { url: IMG_BOTTOM, type: 'image' },

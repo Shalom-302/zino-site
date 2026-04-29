@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 import { Loader2, Image as ImageIcon, CalendarDays, LogOut, Menu, X, CalendarCheck, Mail, Users } from 'lucide-react';
 
 const NAV = [
@@ -24,14 +23,19 @@ export default function TdChefLayout({ children }: { children: React.ReactNode }
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      if (u) setUser(u);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser(session.user);
     });
-    return () => unsub();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
+    // Clear the auth cookie set at login
+    document.cookie = 'sb-zfitspa-auth-token=;path=/;max-age=0;SameSite=Lax';
     router.push('/td-chef/login');
   };
 

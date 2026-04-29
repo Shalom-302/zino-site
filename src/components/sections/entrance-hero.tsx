@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { useEnvironment } from "@/context/environment-context";
+import { proxyUrl } from "@/lib/supabase-url";
 
 interface EntranceHeroProps {
   fitnessImg: string;
@@ -125,13 +126,13 @@ export default function EntranceHero({ fitnessImg, spaImg, fitnessMediaType = 'i
              {fitnessImg ? (
                fitnessMediaType === 'video' ? (
                  <video
-                   src={fitnessImg}
+                   src={proxyUrl(fitnessImg)}
                    autoPlay loop muted playsInline preload="auto"
                    className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-700"
                  />
                ) : (
                  <Image
-                   src={fitnessImg}
+                   src={proxyUrl(fitnessImg)}
                    alt="Fitness"
                    fill
                    className="object-cover scale-105 group-hover:scale-100 transition-transform duration-700"
@@ -207,13 +208,13 @@ export default function EntranceHero({ fitnessImg, spaImg, fitnessMediaType = 'i
              {spaImg ? (
                spaMediaType === 'video' ? (
                  <video
-                   src={spaImg}
+                   src={proxyUrl(spaImg)}
                    autoPlay loop muted playsInline preload="auto"
                    className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-700"
                  />
                ) : (
                  <Image
-                   src={spaImg}
+                   src={proxyUrl(spaImg)}
                    alt="Spa"
                    fill
                    className="object-cover scale-105 group-hover:scale-100 transition-transform duration-700"

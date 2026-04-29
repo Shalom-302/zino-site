@@ -1,7 +1,6 @@
 'use server';
 
-import { db } from '@/lib/firebase-db';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function subscribeNewsletter(email: string): Promise<{ success: boolean; message: string }> {
   if (!email || !email.includes('@')) {
@@ -9,15 +8,20 @@ export async function subscribeNewsletter(email: string): Promise<{ success: boo
   }
 
   const normalized = email.trim().toLowerCase();
-  const docRef = doc(db, 'newsletter_subscribers', normalized);
 
   try {
-    const existing = await getDoc(docRef);
-    if (existing.exists()) {
+    const { data: existing } = await supabaseServer
+      .from('newsletter_subscribers')
+      .select('id')
+      .eq('id', normalized)
+      .single();
+
+    if (existing) {
       return { success: true, message: 'Vous êtes déjà inscrit.' };
     }
 
-    await setDoc(docRef, {
+    await supabaseServer.from('newsletter_subscribers').insert({
+      id: normalized,
       email: normalized,
       created_at: new Date().toISOString(),
     });

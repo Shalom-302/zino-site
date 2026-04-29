@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { proxyUrl } from "@/lib/supabase-url";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -257,14 +258,14 @@ export default function AdminEnvironmentsPage() {
                       <div className="relative aspect-[4/3] bg-white/5 overflow-hidden">
                         {img.media_type === "video" ? (
                           <video
-                            src={img.image_url}
+                            src={proxyUrl(img.image_url)}
                             className="w-full h-full object-cover opacity-70"
                             muted
                             playsInline
                           />
                         ) : (
                           <Image
-                            src={img.image_url}
+                            src={proxyUrl(img.image_url)}
                             alt={img.image_key}
                             fill
                             className="object-cover opacity-70"

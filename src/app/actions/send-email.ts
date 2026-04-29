@@ -1,8 +1,7 @@
 "use server";
 
 import nodemailer from "nodemailer";
-import { db } from "@/lib/firebase-db";
-import { collection, addDoc } from "firebase/firestore";
+import { supabaseServer } from "@/lib/supabase-server";
 import path from "path";
 
 const SPA_LOGO_CID = "logo-spa@zfitspa";
@@ -168,7 +167,15 @@ function buildFitnessConfirmationHtml(f: FormData) {
       <tr><td style="padding:48px 48px 40px;">
         <p style="margin:0 0 6px;color:#E13027;font-family:Georgia,serif;font-size:9px;letter-spacing:4px;text-transform:uppercase;">Confirmation</p>
         <h1 style="margin:0 0 24px;color:#ffffff;font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.2;">Bonjour ${f.civilite ? f.civilite + ' ' + f.nom : f.prenom},<br><em style="color:#E13027;">votre demande est bien reçue.</em></h1>
-        <p style="margin:0 0 32px;color:rgba(255,255,255,0.55);font-family:Georgia,serif;font-size:13px;line-height:1.9;">Nous avons bien reçu votre demande de réservation et notre équipe reviendra vers vous dans les meilleurs délais pour confirmer votre rendez-vous.</p>
+        <p style="margin:0 0 28px;color:rgba(255,255,255,0.55);font-family:Georgia,serif;font-size:13px;line-height:1.9;">Nous avons bien reçu votre demande de réservation et notre équipe reviendra vers vous dans les meilleurs délais pour confirmer votre rendez-vous.</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+          <tr>
+            <td style="background-color:#111111;border-left:3px solid #E13027;padding:16px 20px;">
+              <p style="margin:0 0 6px;color:#E13027;font-family:Georgia,serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;">&#x26A0; Important</p>
+              <p style="margin:0;color:rgba(255,255,255,0.7);font-family:Georgia,serif;font-size:12px;line-height:1.85;">Votre réservation sera effective après règlement de la séance ou d'un acompte. Notre service vous contactera prochainement pour convenir des modalités de paiement.</p>
+            </td>
+          </tr>
+        </table>
         <p style="margin:0 0 16px;color:rgba(255,255,255,0.25);font-family:Georgia,serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;">Récapitulatif</p>
         <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #1f1f1f;">
           <tr>
@@ -262,7 +269,15 @@ function buildSpaConfirmationHtml(f: FormData) {
       <tr><td style="padding:48px 48px 40px;">
         <p style="margin:0 0 6px;color:#C4A87A;font-family:Georgia,serif;font-size:9px;letter-spacing:4px;text-transform:uppercase;">Confirmation</p>
         <h1 style="margin:0 0 24px;color:#1C1108;font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.3;">Bonjour ${f.civilite ? f.civilite + ' ' + f.nom : f.prenom},<br><em style="color:#C4A87A;">votre demande est bien reçue.</em></h1>
-        <p style="margin:0 0 36px;color:rgba(28,17,8,0.55);font-family:Georgia,serif;font-size:13px;line-height:1.9;">Nous avons bien reçu votre demande de réservation et notre équipe reviendra vers vous dans les meilleurs délais pour confirmer votre rendez-vous au spa.</p>
+        <p style="margin:0 0 28px;color:rgba(28,17,8,0.55);font-family:Georgia,serif;font-size:13px;line-height:1.9;">Nous avons bien reçu votre demande de réservation et notre équipe reviendra vers vous dans les meilleurs délais pour confirmer votre rendez-vous au spa.</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+          <tr>
+            <td style="background-color:#F5EFE6;border-left:3px solid #C4A87A;padding:16px 20px;">
+              <p style="margin:0 0 6px;color:#C4A87A;font-family:Georgia,serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;">&#x26A0; Important</p>
+              <p style="margin:0;color:rgba(28,17,8,0.72);font-family:Georgia,serif;font-size:12px;line-height:1.85;">Votre réservation sera effective après règlement de la séance ou d'un acompte. Notre service vous contactera prochainement pour convenir des modalités de paiement.</p>
+            </td>
+          </tr>
+        </table>
         <p style="margin:0 0 16px;color:rgba(28,17,8,0.3);font-family:Georgia,serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;">Récapitulatif</p>
         <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #DDD5C8;">
           <tr>
@@ -294,7 +309,7 @@ function buildSpaConfirmationHtml(f: FormData) {
 export async function sendReservationEmail(formData: FormData) {
   const isSpa = formData.type === "spa";
 
-  await addDoc(collection(db, "reservations"), {
+  await supabaseServer.from("reservations").insert({
     nom: formData.nom,
     prenom: formData.prenom,
     email: formData.email,
@@ -928,9 +943,8 @@ export async function sendGiftCardEmail(data: GiftCardData) {
     tls: { minVersion: "TLSv1.2", rejectUnauthorized: false },
   });
 
-  // Save to Firestore reservations collection
   const noteMessage = `Bénéficiaire: ${data.beneficiairePrenom} ${data.beneficiaireNom}${data.message ? ` | Message: ${data.message}` : ""}`;
-  await addDoc(collection(db, "reservations"), {
+  await supabaseServer.from("reservations").insert({
     prenom: data.offrantPrenom,
     nom: data.offrantNom,
     telephone: data.offrantPhone,
@@ -988,26 +1002,32 @@ export async function createAdminReservation(payload: {
   message: string;
   status: 'pending' | 'approved';
 }) {
-  let docRef: any;
+  let rowId: string;
   try {
-    docRef = await addDoc(collection(db, 'reservations'), {
-      nom:              payload.nom,
-      prenom:           payload.prenom,
-      email:            payload.email || null,
-      telephone:        payload.telephone,
-      type:             payload.type,
-      soin:             payload.soin || null,
-      date_reservation: payload.date_reservation || null,
-      heure:            payload.heure || null,
-      message:          payload.message || null,
-      status:           payload.status,
-      created_at:       new Date().toISOString(),
-    });
+    const { data: inserted, error } = await supabaseServer
+      .from('reservations')
+      .insert({
+        nom:              payload.nom,
+        prenom:           payload.prenom,
+        email:            payload.email || null,
+        telephone:        payload.telephone,
+        type:             payload.type,
+        soin:             payload.soin || null,
+        date_reservation: payload.date_reservation || null,
+        heure:            payload.heure || null,
+        message:          payload.message || null,
+        status:           payload.status,
+        created_at:       new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    rowId = inserted.id;
   } catch (e: any) {
     return { success: false, error: e.message };
   }
 
-  const row = { id: docRef.id, ...payload };
+  const row = { id: rowId, ...payload };
 
   // Send approval email to client if status=approved and email provided
   if (payload.status === 'approved' && payload.email) {

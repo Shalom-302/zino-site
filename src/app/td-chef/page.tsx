@@ -2,10 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth, storage } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy, where } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
+import {
+  addCoachAction,
+  saveCoachAction,
+  toggleCoachPublishedAction,
+  deleteCoachAction,
+  upsertSiteImageAction,
+} from './coach-actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Loader2, Upload, RefreshCcw, Save, User, UserPlus, Trash2, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
+import { proxyUrl } from '@/lib/supabase-url';
 
 // ─── MediaCard — module-level so React never remounts it on parent re-render ───
 function MediaCard({
@@ -32,10 +37,10 @@ function MediaCard({
     <Card className="group overflow-hidden border border-black/8 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl bg-white">
       <div className="relative aspect-video bg-gray-100 overflow-hidden">
         {mediaType === 'video' && imageUrl
-          ? <video src={imageUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+          ? <video src={proxyUrl(imageUrl)} className="w-full h-full object-cover" muted loop autoPlay playsInline />
           : imageUrl
             ? <div className="relative w-full h-full">
-                <Image src={imageUrl} alt={label} fill className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized />
+                <Image src={proxyUrl(imageUrl)} alt={label} fill className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized />
               </div>
             : <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 flex-col gap-2">
                 <Upload className="w-8 h-8 opacity-30" />
@@ -186,33 +191,30 @@ export default function TdChefPage() {
   }, [activeEnv]);
 
   const checkUser = async () => {
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { router.push('/td-chef/login'); setLoading(false); return; }
-      try {
-        await Promise.all([fetchEnvImages(), fetchSiteImages(), fetchEntranceImages(), fetchCoachesInfo('fitness')]);
-      } catch { /* non-blocking */ }
-      finally { setLoading(false); }
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/td-chef/login'); setLoading(false); return; }
+    try {
+      await Promise.all([fetchEnvImages(), fetchSiteImages(), fetchEntranceImages(), fetchCoachesInfo('fitness')]);
+    } catch { /* non-blocking */ }
+    finally { setLoading(false); }
   };
 
   const fetchEnvImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'environment_images'));
-      const data: EnvImage[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as EnvImage));
-      setEnvImages(data.map(img => ({ ...img, image_url: `${img.image_url.split('?')[0]}?t=${Date.now()}` })));
+      const { data, error } = await supabase.from('environment_images').select('*');
+      if (error) throw error;
+      const imgs: EnvImage[] = (data || []).map(r => ({ id: r.id, environment: r.environment, section: r.section, image_key: r.image_key, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type }));
+      setEnvImages(imgs);
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
   };
 
   const fetchEntranceImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'site_images'));
+      const { data } = await supabase.from('site_images').select('id, image_url, media_type').in('id', ['entrance_fitness', 'entrance_spa']);
       const map: Record<string, EntranceImage> = {};
-      snap.docs.forEach(d => {
-        const key = d.id as 'entrance_fitness' | 'entrance_spa';
-        if (key === 'entrance_fitness' || key === 'entrance_spa') {
-          const img = d.data();
-          map[key] = { image_key: key, image_url: `${(img.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: img.media_type || 'image' };
-        }
+      (data || []).forEach(r => {
+        const key = r.id as 'entrance_fitness' | 'entrance_spa';
+        map[key] = { image_key: key, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type || 'image' };
       });
       setEntranceImages(map);
     } catch { /* no-op */ }
@@ -220,22 +222,22 @@ export default function TdChefPage() {
 
   const fetchSiteImages = async () => {
     try {
-      const snap = await getDocs(collection(db, 'site_images'));
-      const data: SiteImage[] = snap.docs.map(d => ({ id: d.id, image_key: d.id, ...d.data() } as SiteImage));
-      setSiteImages(data.map(img => ({ ...img, image_url: `${(img.image_url||'').split('?')[0]}?t=${Date.now()}` })));
+      const { data, error } = await supabase.from('site_images').select('*');
+      if (error) throw error;
+      const imgs: SiteImage[] = (data || []).map(r => ({ id: r.id, section: r.section, image_key: r.id, image_url: `${(r.image_url||'').split('?')[0]}?t=${Date.now()}`, media_type: r.media_type }));
+      setSiteImages(imgs);
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
   };
 
   const fetchCoachesInfo = async (env: 'fitness' | 'spa' = 'fitness') => {
     try {
       const prefix = env === 'spa' ? 'spa_coach_' : 'coach_';
-      const snap = await getDocs(query(
-        collection(db, 'coaches_info'),
-        where('coach_key', '>=', prefix),
-        where('coach_key', '<', prefix + '\uf8ff'),
-        orderBy('coach_key'),
-      ));
-      setCoachesInfo(snap.docs.map(d => d.data() as CoachInfo));
+      const { data: allData } = await supabase
+        .from('coaches_info')
+        .select('*')
+        .order('coach_key', { ascending: true });
+      const data = (allData || []).filter((r: any) => r.coach_key.startsWith(prefix));
+      setCoachesInfo((data || []) as CoachInfo[]);
     } catch { /* no-op */ }
   };
 
@@ -243,33 +245,62 @@ export default function TdChefPage() {
     setCoachesInfo(prev => prev.map(c => c.coach_key === coach_key ? { ...c, [field]: value } : c));
   };
 
+  const toggleCoachPublished = async (coach_key: string, newValue: boolean) => {
+    setCoachesInfo(prev => prev.map(c => c.coach_key === coach_key ? { ...c, published: newValue } : c));
+    try {
+      await toggleCoachPublishedAction(coach_key, newValue);
+      toast.success(newValue ? 'Coach publié' : 'Coach mis en brouillon');
+    } catch (e: any) { toast.error('Erreur: ' + e.message); }
+  };
+
   const saveCoachInfo = async (coach_key: string) => {
     const info = coachesInfo.find(c => c.coach_key === coach_key);
     if (!info) return;
     setSavingCoach(coach_key);
     try {
-      await setDoc(doc(db, 'coaches_info', coach_key), {
-        coach_key,
-        name: info.name, title: info.title, description: info.description,
-        published: info.published ?? false,
-        updated_at: new Date().toISOString(),
-      }, { merge: true });
+      await saveCoachAction(info);
       toast.success('Coach sauvegardé');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
     finally { setSavingCoach(null); }
   };
 
   const uploadFile = async (file: File, uploadId: string): Promise<string> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error('Non authentifié');
     const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
     const fileExt = file.name.split('.').pop();
     const filePath = `${isVideo ? 'videos' : 'images'}/${uploadId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    // Upload directly to Firebase Storage — no server proxy, no size limits
-    const fileRef = storageRef(storage, filePath);
-    await uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
-    const url = await getDownloadURL(fileRef);
-    return url;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const authHeaders: HeadersInit = session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {};
+
+    // Step 1: get a signed upload URL (tiny request to our API)
+    const urlRes = await fetch('/api/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ path: filePath, mimeType: file.type }),
+    });
+    if (!urlRes.ok) {
+      const text = await urlRes.text();
+      let msg = 'Upload failed';
+      try { msg = JSON.parse(text).error || msg; } catch { msg = text.slice(0, 120) || msg; }
+      throw new Error(msg);
+    }
+    const { signedUrl, publicUrl } = await urlRes.json();
+
+    // Step 2: PUT directly from browser to Supabase HTTPS — no Vercel in the path, no size limit
+    const uploadRes = await fetch(signedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type, 'x-upsert': 'true' },
+    });
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text();
+      let msg = `Upload échoué (${uploadRes.status})`;
+      try { msg = JSON.parse(text).error || msg; } catch { msg = text.slice(0, 120) || msg; }
+      throw new Error(msg);
+    }
+    return publicUrl;
   };
 
   // Tous les uploads passent par environment_images
@@ -278,11 +309,12 @@ export default function TdChefPage() {
       setUploading(uploadId);
       const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
       const publicUrl = await uploadFile(file, uploadId);
-      await setDoc(doc(db, 'environment_images', `${env}_${imageKey}`), {
+      await supabase.from('environment_images').upsert({
+        id: `${env}_${imageKey}`,
         environment: env, image_key: imageKey, section: imageKey,
         image_url: publicUrl, media_type: isVideo ? 'video' : 'image',
         updated_at: new Date().toISOString(),
-      }, { merge: true });
+      }, { onConflict: 'id' });
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setEnvImages(prev => {
         const exists = prev.some(img => img.environment === env && img.image_key === imageKey);
@@ -301,10 +333,11 @@ export default function TdChefPage() {
       setUploading(uploadId);
       const isVideo = file.type.startsWith('video/') || ['mp4','webm','ogg','mov'].includes(file.name.split('.').pop()?.toLowerCase() || '');
       const publicUrl = await uploadFile(file, imageKey);
-      await setDoc(doc(db, 'site_images', imageKey), {
+      await supabase.from('site_images').upsert({
+        id: imageKey,
         image_url: publicUrl, media_type: isVideo ? 'video' : 'image',
         updated_at: new Date().toISOString(),
-      }, { merge: true });
+      }, { onConflict: 'id' });
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setEntranceImages(prev => ({ ...prev, [imageKey]: { image_key: imageKey, image_url: busted, media_type: isVideo ? 'video' : 'image' } }));
       toast.success(`${isVideo ? 'Vidéo' : 'Image'} mise à jour`);
@@ -316,18 +349,9 @@ export default function TdChefPage() {
     const prefix = activeEnv === 'spa' ? 'spa_coach_' : 'coach_';
     setAddingCoach(true);
     try {
-      const maxNum = coachesInfo.reduce((max, c) => {
-        const num = parseInt(c.coach_key.replace(prefix, ''), 10);
-        return isNaN(num) ? max : Math.max(max, num);
-      }, 0);
-      const newKey = `${prefix}${maxNum + 1}`;
-      const newCoach: CoachInfo = {
-        coach_key: newKey, name: 'NOUVEAU COACH', title: 'Coach', description: '',
-      };
-      await setDoc(doc(db, 'coaches_info', newKey), {
-        coach_key: newKey, name: newCoach.name, title: newCoach.title, description: newCoach.description,
-        updated_at: new Date().toISOString(),
-      });
+      const existingKeys = coachesInfo.map(c => c.coach_key);
+      const newKey = await addCoachAction(prefix, coachesInfo.length, existingKeys);
+      const newCoach: CoachInfo = { coach_key: newKey, name: 'NOUVEAU COACH', title: 'Coach', description: '' };
       setCoachesInfo(prev => [...prev, newCoach]);
       toast.success('Coach ajouté');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
@@ -336,10 +360,7 @@ export default function TdChefPage() {
 
   const deleteCoach = async (coachKey: string) => {
     try {
-      await Promise.all([
-        deleteDoc(doc(db, 'coaches_info', coachKey)),
-        deleteDoc(doc(db, 'site_images', coachKey)),
-      ]);
+      await deleteCoachAction(coachKey);
       setCoachesInfo(prev => prev.filter(c => c.coach_key !== coachKey));
       toast.success('Coach supprimé');
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
@@ -351,13 +372,7 @@ export default function TdChefPage() {
     try {
       setUploading(uploadId);
       const publicUrl = await uploadFile(file, uploadId);
-      await setDoc(doc(db, 'site_images', imageKey), {
-        image_key: imageKey,
-        image_url: publicUrl,
-        media_type: 'image',
-        section: 'coaches',
-        updated_at: new Date().toISOString(),
-      }, { merge: true });
+      await upsertSiteImageAction(imageKey, publicUrl, 'image');
       const busted = publicUrl.includes('?') ? `${publicUrl}&t=${Date.now()}` : `${publicUrl}?t=${Date.now()}`;
       setSiteImages(prev => {
         const exists = prev.some(img => img.image_key === imageKey);
@@ -511,94 +526,150 @@ export default function TdChefPage() {
               <p className="text-[11px] mt-1">Cliquez sur &quot;Ajouter&quot; pour créer un coach</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {coachesInfo.map((coach, idx) => {
                 const coachImgKey = coach.coach_key;
                 const coachImg = siteMap[coachImgKey];
                 const uploadId = `coach_photo_${coach.coach_key}`;
                 const isDeleting = deletingCoach === coach.coach_key;
                 return (
-                  <Card key={coach.coach_key} className="border border-black/8 shadow-sm rounded-xl bg-white overflow-hidden flex flex-col">
-                    <div className="relative aspect-[4/3] bg-gray-100 group flex-shrink-0">
+                  <Card key={coach.coach_key} className="border border-black/8 shadow-sm rounded-2xl bg-white overflow-hidden flex flex-col group/card transition-shadow hover:shadow-md">
+                    {/* Photo portrait */}
+                    <div className="relative aspect-[3/4] bg-gradient-to-br from-black/5 to-black/10 group flex-shrink-0">
                       {coachImg ? (
-                        <div className="relative w-full h-full">
-                          <Image src={coachImg.image_url} alt={coach.name || `Coach ${idx+1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized />
-                        </div>
+                        <Image src={proxyUrl(coachImg.image_url)} alt={coach.name || `Coach ${idx+1}`} fill className="object-cover object-top transition-transform duration-700 group-hover:scale-105" unoptimized />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-black/5">
-                          <User className="w-10 h-10 text-black/20" />
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-black/20">
+                          <User className="w-12 h-12" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Aucune photo</span>
                         </div>
                       )}
-                      <label className={`absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 ${uploading ? 'pointer-events-none' : 'cursor-pointer'}`}>
-                        <span className="bg-white text-black px-4 py-2 rounded-full font-bold text-sm hover:bg-[#E13027] hover:text-white transition-colors flex items-center gap-2 pointer-events-none">
-                          <Upload className="w-4 h-4" /> Photo
+
+                      {/* Overlay upload */}
+                      <label className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end pb-6 z-10 ${uploading ? 'pointer-events-none' : 'cursor-pointer'}`}>
+                        <span className="bg-white/95 text-black px-5 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#E13027] hover:text-white transition-colors flex items-center gap-2 pointer-events-none shadow-sm">
+                          <Upload className="w-3.5 h-3.5" /> Changer la photo
                         </span>
                         <input type="file" accept="image/*" className="hidden"
                           onChange={e => { const f = e.target.files?.[0]; if (f) { e.target.value = ''; doUploadCoach(f, uploadId, coachImgKey); } }}
                           disabled={!!uploading} />
                       </label>
+
+                      {/* Upload progress */}
                       {uploading === uploadId && (
-                        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
-                          <Loader2 className="w-8 h-8 animate-spin text-[#E13027] mb-2" />
-                          <span className="text-white text-[10px] font-bold uppercase tracking-widest">Upload...</span>
+                        <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center z-20 gap-3">
+                          <Loader2 className="w-8 h-8 animate-spin text-[#E13027]" />
+                          <span className="text-white text-[10px] font-bold uppercase tracking-widest">Envoi en cours...</span>
                         </div>
                       )}
-                      <div className="absolute top-2 left-2">
-                        <span className="w-6 h-6 bg-[#E13027] text-white flex items-center justify-center text-[10px] font-black rounded">{idx + 1}</span>
+
+                      {/* Numéro d'ordre */}
+                      <div className="absolute top-3 left-3">
+                        <span className="w-7 h-7 bg-[#E13027] text-white flex items-center justify-center text-[11px] font-black rounded-lg shadow-sm">{idx + 1}</span>
+                      </div>
+
+                      {/* Badge statut en haut à droite */}
+                      <div className="absolute top-3 right-3">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full shadow-sm ${coach.published ? 'bg-emerald-500 text-white' : 'bg-black/50 text-white/80'}`}>
+                          {coach.published ? '● Publié' : '○ Brouillon'}
+                        </span>
                       </div>
                     </div>
-                    <CardContent className="flex flex-col gap-3 pt-4 flex-1">
+
+                    {/* Contenu */}
+                    <CardContent className="flex flex-col gap-3 p-5 flex-1">
+                      {/* Nom en gros */}
                       <div>
-                        <Label className="text-[10px] uppercase tracking-widest text-black/40 mb-1 block">Nom</Label>
-                        <Input value={coach.name} onChange={e => handleCoachInfoChange(coach.coach_key, 'name', e.target.value)} className="text-sm text-black bg-white" />
+                        <Label className="text-[9px] uppercase tracking-widest text-black/30 mb-1 block">Nom</Label>
+                        <Input
+                          value={coach.name}
+                          onChange={e => handleCoachInfoChange(coach.coach_key, 'name', e.target.value)}
+                          className="text-sm font-semibold text-black bg-white h-9"
+                          placeholder="Prénom Nom"
+                        />
                       </div>
+
+                      {/* Titre */}
                       <div>
-                        <Label className="text-[10px] uppercase tracking-widest text-black/40 mb-1 block">Titre / Poste</Label>
-                        <Input value={coach.title} onChange={e => handleCoachInfoChange(coach.coach_key, 'title', e.target.value)} className="text-sm text-black bg-white" />
+                        <Label className="text-[9px] uppercase tracking-widest text-black/30 mb-1 block">Titre / Spécialité</Label>
+                        <Input
+                          value={coach.title}
+                          onChange={e => handleCoachInfoChange(coach.coach_key, 'title', e.target.value)}
+                          className="text-sm text-black bg-white h-9"
+                          placeholder="Ex : Coach Expert · Musculation"
+                        />
                       </div>
-                      <div>
-                        <Label className="text-[10px] uppercase tracking-widest text-black/40 mb-1 block">Description</Label>
-                        <Textarea value={coach.description ?? ''} onChange={e => handleCoachInfoChange(coach.coach_key, 'description', e.target.value)} className="text-sm resize-none text-black bg-white" rows={3} />
+
+                      {/* Description */}
+                      <div className="flex-1">
+                        <Label className="text-[9px] uppercase tracking-widest text-black/30 mb-1 block">Bio</Label>
+                        <Textarea
+                          value={coach.description ?? ''}
+                          onChange={e => handleCoachInfoChange(coach.coach_key, 'description', e.target.value)}
+                          className="text-sm resize-none text-black bg-white leading-relaxed"
+                          rows={4}
+                          placeholder="Présentation courte du coach ou de la praticienne…"
+                        />
                       </div>
-                      {/* Statut Brouillon / Publié */}
-                      <div className="flex items-center gap-2 py-2 border-t border-black/6">
+
+                      {/* Footer */}
+                      <div className="flex flex-col gap-2 pt-3 border-t border-black/6 mt-auto">
+
+                        {/* Toggle publié */}
                         <button
                           type="button"
-                          onClick={() => handleCoachInfoChange(coach.coach_key, 'published', !coach.published)}
-                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${coach.published ? 'bg-emerald-500' : 'bg-black/20'}`}
+                          onClick={() => toggleCoachPublished(coach.coach_key, !coach.published)}
+                          className={`flex items-center justify-center gap-2 w-full h-8 rounded-lg text-[10px] font-sans font-semibold not-italic uppercase tracking-widest transition-all ${
+                            coach.published
+                              ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                              : 'bg-black/5 text-black/35 hover:bg-black/8 hover:text-black/55'
+                          }`}
                           role="switch"
                           aria-checked={coach.published ?? false}
                         >
-                          <span
-                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${coach.published ? 'translate-x-4' : 'translate-x-0'}`}
-                          />
-                        </button>
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${coach.published ? 'text-emerald-600' : 'text-black/35'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${coach.published ? 'bg-emerald-500' : 'bg-black/25'}`} />
                           {coach.published ? 'Publié' : 'Brouillon'}
-                        </span>
-                      </div>
+                        </button>
 
-                      <div className="flex gap-2 mt-auto">
-                        <Button onClick={() => saveCoachInfo(coach.coach_key)} disabled={savingCoach === coach.coach_key}
-                          className="flex-1 bg-[#0F0F0F] hover:bg-[#E13027] text-white text-xs uppercase tracking-widest font-bold">
-                          {savingCoach === coach.coach_key ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3 h-3 mr-1.5" />Sauvegarder</>}
-                        </Button>
+                        {/* Actions */}
                         {isDeleting ? (
-                          <div className="flex gap-1">
-                            <Button onClick={() => deleteCoach(coach.coach_key)} size="sm"
-                              className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase tracking-widest font-bold px-3">
-                              Oui
-                            </Button>
-                            <Button onClick={() => setDeletingCoach(null)} size="sm" variant="outline"
-                              className="text-[10px] uppercase tracking-widest font-bold px-3">
-                              Non
-                            </Button>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => deleteCoach(coach.coach_key)}
+                              className="flex-1 flex items-center justify-center h-9 rounded-lg bg-red-600 hover:bg-red-700 active:scale-95 text-white text-[10px] font-sans font-semibold not-italic uppercase tracking-widest transition-all"
+                            >
+                              Confirmer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingCoach(null)}
+                              className="flex-1 flex items-center justify-center h-9 rounded-lg border border-black/12 bg-white hover:bg-black/4 text-black/45 hover:text-black/65 text-[10px] font-sans font-semibold not-italic uppercase tracking-widest transition-all"
+                            >
+                              Annuler
+                            </button>
                           </div>
                         ) : (
-                          <Button onClick={() => setDeletingCoach(coach.coach_key)} size="sm" variant="outline"
-                            className="border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 px-3">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveCoachInfo(coach.coach_key)}
+                              disabled={savingCoach === coach.coach_key}
+                              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[#0F0F0F] hover:bg-[#E13027] active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-white text-[10px] font-sans font-semibold not-italic uppercase tracking-widest transition-all"
+                            >
+                              {savingCoach === coach.coach_key
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <><Save className="w-3 h-3" />Sauvegarder</>
+                              }
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingCoach(coach.coach_key)}
+                              className="flex items-center justify-center h-9 w-9 rounded-lg border border-black/10 text-black/25 hover:border-red-200 hover:text-red-400 hover:bg-red-50 active:scale-95 flex-shrink-0 transition-all"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </CardContent>

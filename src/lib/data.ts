@@ -1,16 +1,16 @@
-import { db } from './firebase';
-import { collection, getDocs } from 'firebase/firestore';
-
+import { supabaseServer } from './supabase-server';
 
 export async function getInitialImages() {
   try {
-    const snap = await getDocs(collection(db, 'site_images'));
+    const { data, error } = await supabaseServer
+      .from('site_images')
+      .select('id, image_url, media_type');
+    if (error) throw error;
     const result: Record<string, { url: string; type: 'image' | 'video' }> = {};
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      result[docSnap.id] = {
-        url:  d.image_url || '',
-        type: (d.media_type as 'image' | 'video') || 'image',
+    (data || []).forEach((row) => {
+      result[row.id] = {
+        url: row.image_url || '',
+        type: (row.media_type as 'image' | 'video') || 'image',
       };
     });
     return result;

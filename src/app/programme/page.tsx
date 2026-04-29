@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import FooterMain from "@/components/sections/footer-main";
-import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { fetchDB } from "@/lib/fetchDB";
 
 const CATEGORIES = ["Les Mills", "HBX", "Aquagym", "RPM"];
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -75,8 +74,8 @@ export default function ProgrammePage() {
   useEffect(() => {
     const fetchSlots = async () => {
       setLoading(true);
-      const snap = await getDocs(collection(db, "programme"));
-      setSlots(snap.docs.map(d => ({ id: d.id, ...d.data() } as Slot)));
+      const snap = await fetchDB("programme");
+      setSlots(snap as Slot[]);
       setLoading(false);
     };
     fetchSlots();

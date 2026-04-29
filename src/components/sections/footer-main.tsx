@@ -1,8 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { subscribeNewsletter } from '@/app/actions/newsletter';
 
 const APP_STORE_URL = 'https://apps.apple.com/ci/app/heitzfit-4/id1570796326?l=en-GB';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.heitz.heitzfit4&pcampaignid=web_share';
@@ -18,14 +17,9 @@ const FooterMain = () => {
     if (!email) return;
     setSubmitting(true);
     try {
-      const normalized = email.trim().toLowerCase();
-      const docRef = doc(db, 'newsletter_subscribers', normalized);
-      const existing = await getDoc(docRef);
-      if (existing.exists()) {
-        setMessage('Vous êtes déjà inscrit à notre newsletter.');
-      } else {
-        await setDoc(docRef, { email: normalized, created_at: new Date().toISOString() });
-        setMessage('Votre email a bien été enregistré. Merci !');
+      const result = await subscribeNewsletter(email);
+      setMessage(result.message);
+      if (result.success && result.message.includes('Merci')) {
         setSubmitted(true);
         setEmail('');
       }

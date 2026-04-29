@@ -4,8 +4,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { fetchDB } from '@/lib/fetchDB';
+import { proxyUrl } from '@/lib/supabase-url';
 import { useEnvironment } from '@/context/environment-context';
 
 type ActivityCategory = 'LES MILLS' | 'HBX' | 'SIGNATURE Z FIT' | 'CARDIO' | 'RENFORCEMENT' | 'COMBAT' | 'CYCLING' | 'HIIT' | 'DANSE' | 'MOBILITÉ' | 'KIDS';
@@ -143,11 +143,11 @@ const TestimonialsSection = ({ initialImages, envImages }: { initialImages?: Rec
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const snap = await getDocs(query(collection(db, 'site_images'), where('section', '==', 'activities')));
-      if (!snap.empty) {
+      const snap = await fetchDB('site_images', 'id, image_url', [{ type: 'eq', field: 'section', value: 'activities' }]);
+      if (snap && snap.length > 0) {
         setActivities(prev => prev.map(activity => {
-          const d = snap.docs.find(doc => doc.id === activity.key);
-          return d ? { ...activity, image: d.data().image_url } : activity;
+          const d = snap.find((row: any) => row.id === activity.key);
+          return d ? { ...activity, image: d.image_url } : activity;
         }));
       }
     };
@@ -361,7 +361,7 @@ const TestimonialsSection = ({ initialImages, envImages }: { initialImages?: Rec
               {/* Image */}
               <div className="relative w-full mb-4 overflow-hidden" style={{ aspectRatio: '4/3' }}>
                 <Image
-                  src={envImages?.[cat.imgKey]?.url || cat.imgDefault}
+                  src={proxyUrl(envImages?.[cat.imgKey]?.url || cat.imgDefault)}
                   alt={cat.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -557,7 +557,7 @@ const TestimonialsSection = ({ initialImages, envImages }: { initialImages?: Rec
             {/* Image */}
             <div className="relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
               <Image
-                src={activity.image}
+                src={proxyUrl(activity.image)}
                 alt={activity.name}
                 fill
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"

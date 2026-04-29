@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { proxyUrl } from '@/lib/supabase-url';
 
 interface HeroSectionProps {
     initialImage?: string;
@@ -78,7 +79,7 @@ const HeroSection = ({ initialImage, initialMediaType, envContent = {}, environm
               {heroMedia && (mediaType === 'video' ? (
                 <video
                   key={heroMedia}
-                  src={heroMedia}
+                  src={proxyUrl(heroMedia)}
                   autoPlay
                   loop
                   muted
@@ -90,7 +91,7 @@ const HeroSection = ({ initialImage, initialMediaType, envContent = {}, environm
               ) : (
                 <Image
                   key={heroMedia}
-                  src={heroMedia}
+                  src={proxyUrl(heroMedia)}
                   alt="Intense training at ZFitSpa"
                   fill
                   priority

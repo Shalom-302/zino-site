@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth } from '@/lib/firebase';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import {
   Loader2, Check, X, RefreshCcw, Calendar, Phone, Mail,
@@ -169,17 +167,21 @@ export default function ReservationsPage() {
   const todayStr = toDateStr(new Date());
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) { router.push('/td-chef/login'); return; }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { router.push('/td-chef/login'); return; }
       fetchReservations();
     });
-    return () => unsub();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!session) router.push('/td-chef/login');
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchReservations = async () => {
     try {
-      const snap = await getDocs(query(collection(db, 'reservations'), orderBy('created_at', 'desc')));
-      setReservations(snap.docs.map(d => ({ id: d.id, ...d.data() } as Reservation)));
+      const { data: snap, error } = await supabase.from('reservations').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setReservations((snap || []) as Reservation[]);
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
     setLoading(false);
   };
@@ -198,7 +200,7 @@ export default function ReservationsPage() {
     if (!selected || !editDate || !editTime) return;
     setRescheduling(true);
     try {
-      await updateDoc(doc(db, 'reservations', selected.id), {
+      const { error: updErr } = await supabase.from('reservations').update({
         date_reservation: editDate,
         heure: editTime,
       });
@@ -224,7 +226,7 @@ export default function ReservationsPage() {
   const updateStatus = async (id: string, status: 'approved' | 'refused') => {
     setUpdating(id);
     try {
-      await updateDoc(doc(db, 'reservations', id), { status });
+      await supabase.from('reservations').update({ status }).eq('id', id);
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r));
       if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
       const reservation = reservations.find(r => r.id === id);
@@ -249,7 +251,7 @@ export default function ReservationsPage() {
     if (!selected) return;
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, 'reservations', selected.id));
+      await supabase.from('reservations').delete().eq('id', selected.id);
       toast.success('Réservation supprimée');
       setReservations(prev => prev.filter(r => r.id !== selected.id));
       setSelected(null);

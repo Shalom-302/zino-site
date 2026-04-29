@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useEnvironment } from '@/context/environment-context';
+import { proxyUrl } from '@/lib/supabase-url';
 
 interface CoreWorkoutProps {
   initialTop?: string;
@@ -371,13 +372,13 @@ const CoreWorkout = ({ initialTop, initialMiddle, initialBottom, initialTopType,
               >
                 {mediaTypes[f.key] === 'video' ? (
                   <video
-                    src={images[f.key]}
+                    src={proxyUrl(images[f.key])}
                     autoPlay loop muted playsInline preload="auto"
                     className={`absolute inset-0 w-full h-full object-cover${isSpa ? '' : ' grayscale'}`}
                   />
                 ) : (
                   <Image
-                    src={images[f.key]}
+                    src={proxyUrl(images[f.key])}
                     alt={f.title}
                     fill
                     className={`object-cover${isSpa ? '' : ' grayscale'}`}
@@ -422,13 +423,13 @@ const CoreWorkout = ({ initialTop, initialMiddle, initialBottom, initialTopType,
               >
                 {mediaTypes[f.key] === 'video' ? (
                   <video
-                    src={images[f.key]}
+                    src={proxyUrl(images[f.key])}
                     autoPlay loop muted playsInline preload="auto"
                     className={`absolute inset-0 w-full h-full object-cover${isSpa ? '' : ' grayscale'}`}
                   />
                 ) : (
                   <Image
-                    src={images[f.key]}
+                    src={proxyUrl(images[f.key])}
                     alt={f.title}
                     fill
                     className={`object-cover${isSpa ? '' : ' grayscale'}`}

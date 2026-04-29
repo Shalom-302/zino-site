@@ -8,8 +8,6 @@ import FooterMain from "@/components/sections/footer-main";
 import { sendReservationEmail } from "@/app/actions/send-email";
 import { toast } from "sonner";
 import { useEnvironment } from "@/context/environment-context";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -197,18 +195,10 @@ const ReservationPage = () => {
 
   useEffect(() => {
     if (!formData.jour) return;
-    getDocs(query(
-      collection(db, "reservations"),
-      where("date_reservation", "==", formData.jour),
-      where("status", "==", "approved")
-    )).then((snap) => {
-      const counts: Record<string, number> = {};
-      snap.docs.forEach(d => {
-        const h = d.data().heure;
-        if (h) counts[h] = (counts[h] || 0) + 1;
-      });
-      setCreneauxPris(Object.keys(counts).filter(h => counts[h] >= 4));
-    });
+    fetch(`/api/availability?date=${formData.jour}`)
+      .then(r => r.json())
+      .then(({ taken }) => { if (Array.isArray(taken)) setCreneauxPris(taken); })
+      .catch(() => {});
   }, [formData.jour]);
 
   const handleSubmit = async (e: React.FormEvent) => {
