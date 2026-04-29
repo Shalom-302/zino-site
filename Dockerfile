@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────
-# 1. Install deps (cached layer)
+# 1. Install deps (cache)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
@@ -18,18 +18,21 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env (public only)
+# 🔥 BUILD ENV (IMPORTANT)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG SUPABASE_SERVICE_ROLE_KEY
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
 # ─────────────────────────────────────────────
-# 3. Production runner (ultra léger)
+# 3. Runner (ultra léger)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -37,21 +40,17 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Sécurité + init
 RUN apk add --no-cache dumb-init libc6-compat
 
-# User sécurisé (UNE SEULE FOIS)
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs --ingroup nodejs
 
-# Copier uniquement le nécessaire
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-# PORT STAGING
 EXPOSE 3002
 ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
