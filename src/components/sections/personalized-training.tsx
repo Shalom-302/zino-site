@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase';
+import { fetchDBSingle } from '@/lib/fetchDB';
+import { proxyUrl } from '@/lib/supabase-url';
 
 interface PersonalizedTrainingProps {
   initialTop?: string;
@@ -16,13 +17,13 @@ const PersonalizedTraining = ({ initialTop, initialBottom }: PersonalizedTrainin
   useEffect(() => {
     const fetchImages = async () => {
       const [topDoc, altDoc, botDoc] = await Promise.all([
-        supabase.from('site_images').select('image_url').eq('id', 'art_body_top').single(),
-        supabase.from('site_images').select('image_url').eq('id', 'art_body').single(),
-        supabase.from('site_images').select('image_url').eq('id', 'art_body_bottom').single(),
+        fetchDBSingle('site_images', 'image_url', [{ type: 'eq', field: 'id', value: 'art_body_top' }]),
+        fetchDBSingle('site_images', 'image_url', [{ type: 'eq', field: 'id', value: 'art_body' }]),
+        fetchDBSingle('site_images', 'image_url', [{ type: 'eq', field: 'id', value: 'art_body_bottom' }]),
       ]);
-      if (topDoc.data?.image_url) setImageTop(topDoc.data.image_url);
-      else if (altDoc.data?.image_url) setImageTop(altDoc.data.image_url);
-      if (botDoc.data?.image_url) setImageBottom(botDoc.data.image_url);
+      if (topDoc?.image_url) setImageTop(topDoc.image_url);
+      else if (altDoc?.image_url) setImageTop(altDoc.image_url);
+      if (botDoc?.image_url) setImageBottom(botDoc.image_url);
     };
 
     fetchImages();
@@ -38,7 +39,7 @@ const PersonalizedTraining = ({ initialTop, initialBottom }: PersonalizedTrainin
             {/* Grande image — avec marges, ne touche pas les bords */}
             <div className="relative w-[90%] h-[62vh] lg:h-[72vh] mt-8">
             <Image
-              src={imageTop}
+              src={proxyUrl(imageTop)}
               alt="Séance de sport intense chez ZFitSpa"
               fill
               className="object-cover"
@@ -52,7 +53,7 @@ const PersonalizedTraining = ({ initialTop, initialBottom }: PersonalizedTrainin
             {/* Petite image — superposée en haut à droite */}
             <div className="absolute top-8 right-8 w-[44%] aspect-[4/3] z-10 shadow-2xl">
             <Image
-              src={imageBottom}
+              src={proxyUrl(imageBottom)}
               alt="Membres participant à un cours chez ZFitSpa"
               fill
               className="object-cover"

@@ -34,6 +34,8 @@ export default function TdChefLayout({ children }: { children: React.ReactNode }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // Clear the auth cookie set at login
+    document.cookie = 'sb-zfitspa-auth-token=;path=/;max-age=0;SameSite=Lax';
     router.push('/td-chef/login');
   };
 

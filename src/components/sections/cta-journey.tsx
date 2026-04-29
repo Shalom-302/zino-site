@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEnvironment } from '@/context/environment-context';
+import { proxyUrl } from '@/lib/supabase-url';
 
 /**
  * CTAJourney Section Component
@@ -35,7 +36,7 @@ export default function CTAJourney({ initialImage, envImage }: CTAJourneyProps) 
               <div className="absolute inset-0 z-0">
                   {backgroundImage && (
                     <Image
-                      src={backgroundImage}
+                      src={proxyUrl(backgroundImage)}
                       alt="Group of people working out at ZFitSpa"
                       fill
                       className={`object-cover ${isSpa ? 'opacity-90' : 'opacity-70'}`}

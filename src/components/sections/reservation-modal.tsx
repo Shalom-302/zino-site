@@ -5,7 +5,8 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReservationModal } from "@/components/providers/reservation-modal-provider";
-import { supabase } from "@/lib/supabase";
+import { fetchDBSingle } from "@/lib/fetchDB";
+import { proxyUrl } from "@/lib/supabase-url";
 
 const ReservationModal = () => {
   const { isOpen, closeModal } = useReservationModal();
@@ -21,7 +22,7 @@ const ReservationModal = () => {
 
   useEffect(() => {
     const fetchCTAImage = async () => {
-      const { data: d } = await supabase.from('site_images').select('image_url').eq('id', 'cta_journey').single();
+      const d = await fetchDBSingle('site_images', 'image_url', [{ type: 'eq', field: 'id', value: 'cta_journey' }]);
       if (d?.image_url) setBackgroundImage(d.image_url);
     };
 
@@ -83,7 +84,7 @@ const ReservationModal = () => {
               {/* Left Side: Photo with Info (Home Style) */}
               <div className="relative w-full md:w-1/2 h-[300px] md:h-[auto] overflow-hidden flex items-center justify-center">
                 <Image
-                  src={backgroundImage}
+                  src={proxyUrl(backgroundImage)}
                   alt="Reservation Background"
                   fill
                   className="object-cover"

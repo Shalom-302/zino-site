@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
 
   // Read the Supabase auth token from cookies
   const cookieHeader = request.headers.get('cookie') || '';
-  const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
+  const tokenMatch = cookieHeader.match(/sb-zfitspa-auth-token=([^;]+)/);
   const accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
 
   if (!accessToken) {
@@ -26,11 +26,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const supabase = createClient(supabaseUrl, anonKey);
-    // Parse the stored session JSON (Supabase stores it as JSON in the cookie)
-    const session = JSON.parse(accessToken);
-    const token = session?.access_token ?? accessToken;
-
-    const { data: { user } } = await supabase.auth.getUser(token);
+    const { data: { user } } = await supabase.auth.getUser(accessToken);
     if (!user) {
       return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
     }

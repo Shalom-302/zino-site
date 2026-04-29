@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 
 const BUCKET = 'site-assets';
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
 const ALLOWED_MIME = [
   'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
   'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 });
+      return NextResponse.json({ error: 'File too large (max 500 MB)' }, { status: 413 });
     }
 
     // Validate MIME type

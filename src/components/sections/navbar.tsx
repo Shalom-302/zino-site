@@ -7,7 +7,7 @@ import { Plus, X } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useEnvironment } from "@/context/environment-context";
 import { usePageTransition } from "@/context/transition-context";
-import { supabase } from "@/lib/supabase";
+import { fetchDB } from "@/lib/fetchDB";
 
 const DEFAULT_FITNESS_LINKS = [
   { name: "Cours", href: "/#nos-cours" },
@@ -82,11 +82,10 @@ const NavbarInner = () => {
     if (!environment) return;
 
     const fetchNavLinks = async () => {
-      const { data: snapData } = await supabase
-        .from("environment_content")
-        .select("*")
-        .eq("environment", environment)
-        .eq("section", "navbar");
+      const snapData = await fetchDB("environment_content", "*", [
+        { type: "eq", field: "environment", value: environment },
+        { type: "eq", field: "section", value: "navbar" },
+      ]);
 
       const defaults = environment === "spa" ? DEFAULT_SPA_LINKS : DEFAULT_FITNESS_LINKS;
       const snap = snapData || [];

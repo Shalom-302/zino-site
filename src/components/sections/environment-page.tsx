@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { fetchDB } from "@/lib/fetchDB";
+import { proxyUrl } from "@/lib/supabase-url";
 import { useEnvironment } from "@/context/environment-context";
 import HeroSection from "@/components/sections/hero";
 import ClubPresentation from "@/components/sections/club-presentation";
@@ -53,14 +54,14 @@ export default function EnvironmentPage({
   };
 
   const fetchForEnv = async (env: string) => {
-    const [contentRes, imgRes] = await Promise.all([
-      supabase.from("environment_content").select("*").eq("environment", env),
-      supabase.from("environment_images").select("*").eq("environment", env),
+    const [contentRows, imgRows] = await Promise.all([
+      fetchDB("environment_content", "*", [{ type: "eq", field: "environment", value: env }]),
+      fetchDB("environment_images", "*", [{ type: "eq", field: "environment", value: env }]),
     ]);
     const contentMap: EnvContent = {};
-    (contentRes.data || []).forEach((r) => { contentMap[`${r.section}_${r.key}`] = r.value; });
+    contentRows.forEach((r: any) => { contentMap[`${r.section}_${r.key}`] = r.value; });
     const imgMap: EnvImages = {};
-    (imgRes.data || []).forEach((r) => { imgMap[r.image_key] = { url: r.image_url, type: r.media_type }; });
+    imgRows.forEach((r: any) => { imgMap[r.image_key] = { url: r.image_url, type: r.media_type }; });
     cacheRef.current[env] = { content: contentMap, images: imgMap };
     return { contentMap, imgMap };
   };
@@ -132,7 +133,7 @@ export default function EnvironmentPage({
                 transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Image
-                  src={envImages['gift_moment']?.url || 'https://images.unsplash.com/photo-1607006344380-b6775a0824a7?q=80&w=900'}
+                  src={proxyUrl(envImages['gift_moment']?.url || 'https://images.unsplash.com/photo-1607006344380-b6775a0824a7?q=80&w=900')}
                   alt="Offrez un moment d'exception"
                   fill
                   className="object-cover"

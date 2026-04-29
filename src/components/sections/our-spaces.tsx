@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase';
+import { fetchDB } from '@/lib/fetchDB';
+import { proxyUrl } from '@/lib/supabase-url';
 import { useEnvironment } from '@/context/environment-context';
 
 const FITNESS_SPACES = [
@@ -65,16 +66,16 @@ const OurSpaces = ({ envImages }: { envImages?: Record<string, { url: string; ty
 
     const fetchImages = async () => {
       const keys = SPACES.map(s => s.key);
-      const { data: envSnap } = await supabase.from('environment_images').select('*').in('image_key', keys);
-      if (envSnap && envSnap.length > 0) {
+      const envSnap = await fetchDB('environment_images', '*', [{ type: 'in', field: 'image_key', values: keys }]);
+      if (envSnap.length > 0) {
         const map: Record<string, string> = {};
         envSnap.forEach((d: any) => { map[d.image_key] = d.image_url; });
         setImages(map);
         return;
       }
-      const { data: snap } = await supabase.from('site_images').select('id, image_url').in('id', keys);
+      const snap = await fetchDB('site_images', 'id, image_url', [{ type: 'in', field: 'id', values: keys }]);
       const map: Record<string, string> = {};
-      (snap || []).forEach((d: any) => { map[d.id] = d.image_url; });
+      snap.forEach((d: any) => { map[d.id] = d.image_url; });
       setImages(map);
     };
     fetchImages();
@@ -134,7 +135,7 @@ const OurSpaces = ({ envImages }: { envImages?: Record<string, { url: string; ty
       >
         <Image
           key={currentSpace.key}
-          src={imgSrc}
+          src={proxyUrl(imgSrc)}
           alt={currentSpace.label}
           fill
           className="object-cover"

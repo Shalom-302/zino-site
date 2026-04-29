@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import FooterMain from "@/components/sections/footer-main";
-import { supabase } from "@/lib/supabase";
+import { fetchDB } from "@/lib/fetchDB";
 
 const CATEGORIES = ["Les Mills", "HBX", "Aquagym", "RPM"];
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -74,8 +74,8 @@ export default function ProgrammePage() {
   useEffect(() => {
     const fetchSlots = async () => {
       setLoading(true);
-      const { data: snap } = await supabase.from("programme").select("*");
-      setSlots((snap || []) as Slot[]);
+      const snap = await fetchDB("programme");
+      setSlots(snap as Slot[]);
       setLoading(false);
     };
     fetchSlots();
