@@ -10,7 +10,8 @@ const LEGACY_ORIGINS = [
  * Normalises a Supabase storage URL:
  * - Legacy traefik.me URLs are rewritten to the current SUPABASE_ORIGIN.
  * - HTTP origins (local dev without TLS) are proxied through same-domain to avoid mixed-content.
- * - HTTPS origins (e.g. api-supabase.zfitspa.com) are returned unchanged.
+ * - HTTPS storage objects are routed through /api/img which adds long-lived cache headers,
+ *   so the browser only downloads each file once per 30 days.
  */
 export function proxyUrl(url: string | null | undefined): string {
   if (!url) return '';
@@ -23,9 +24,16 @@ export function proxyUrl(url: string | null | undefined): string {
     }
   }
 
-  // Only proxy HTTP origins — HTTPS origins are served directly (no mixed-content issue).
-  if (SUPABASE_ORIGIN.startsWith('http://') && url.startsWith(SUPABASE_ORIGIN)) {
+  if (!SUPABASE_ORIGIN || !url.startsWith(SUPABASE_ORIGIN)) return url;
+
+  // HTTP origins → full transparent proxy (avoids mixed-content)
+  if (SUPABASE_ORIGIN.startsWith('http://')) {
     return '/api/supabase-proxy' + url.slice(SUPABASE_ORIGIN.length);
+  }
+
+  // HTTPS storage objects → caching proxy (adds 30-day Cache-Control header)
+  if (url.includes('/storage/v1/object/')) {
+    return '/api/img?url=' + encodeURIComponent(url);
   }
 
   return url;

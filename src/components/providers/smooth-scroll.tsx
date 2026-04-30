@@ -46,6 +46,10 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     const doScroll = (el: Element) => {
       sessionStorage.removeItem('_pendingScrollTo');
+      // Clear URL hash silently so it doesn't persist across further navigation
+      if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       const lenis = lenisRef.current || (window as any).lenis;
       if (lenis) {
         lenis.scrollTo(el as HTMLElement, { offset: -80, duration: 1.2 });
@@ -61,8 +65,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
         setTimeout(() => doScroll(el), 80);
         return;
       }
-      // Element not in DOM yet — retry up to 20 times (≈3s total)
-      if (++attempts < 20) {
+      // Element not in DOM yet — retry up to 40 times (≈6s total)
+      if (++attempts < 40) {
         timerId = setTimeout(tryScroll, 150);
       }
     };
