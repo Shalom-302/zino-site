@@ -58,9 +58,9 @@ const NavbarInner = () => {
       };
       tryScroll();
     } else {
-      // Store hash in sessionStorage so SmoothScroll finds it reliably on arrival
+      // Store hash in sessionStorage AND embed in URL so both mechanisms fire in prod
       sessionStorage.setItem('_pendingScrollTo', hash);
-      navigateTo('/');
+      navigateTo(`/${hash}`);
     }
     setIsMobileMenuOpen(false);
   };

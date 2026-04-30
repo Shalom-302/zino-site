@@ -38,16 +38,17 @@ export default function EnvironmentPage({
     if (typeof window === "undefined") return;
     Object.values(imgMap).forEach(({ url, type }) => {
       if (!url) return;
+      const cached = proxyUrl(url);
       if (type === "image") {
-        // Push image into browser HTTP cache
+        // Push image into browser HTTP cache using the proxy URL (same entry that renders use)
         const img = new window.Image();
-        img.src = url;
+        img.src = cached;
       } else if (type === "video") {
         // Hint the browser to start fetching video bytes
         const link = document.createElement("link");
         link.rel = "prefetch";
         link.as = "video";
-        link.href = url;
+        link.href = cached;
         document.head.appendChild(link);
       }
     });
