@@ -8,6 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+
 interface Subscriber {
   id: string;
   email: string;
